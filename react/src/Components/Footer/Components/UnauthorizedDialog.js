@@ -6,6 +6,8 @@ import Button from '@mui/material/Button';
 import DialogContent from '@mui/material/DialogContent';
 import { SvgIcon } from 'Components/SvgIcon';
 import { useTranslation } from 'react-i18next';
+import { SvgComponent } from 'learnystIcons';
+import { Box } from '@mui/material';
 
 const AntDialogTitle = props => {
   const { children, onClose, ...other } = props;
@@ -20,11 +22,14 @@ const AntDialogTitle = props => {
           onClick={onClose}
           sx={{
             position: 'absolute',
-            right: 26,
-            top: 27,
+            // right: 26,
+            // top: 27,
+            right: 0,
+            top: 10,
           }}
         >
-          <SvgIcon size={30} name={'close'} color={'white'} />
+          {/* <SvgIcon size={30} name={'close'} color={'white'} /> */}
+          <SvgComponent name="close" width="18px" height="18px" fill={"#000000"}/>
         </Button>
       ) : null}
     </DialogTitle>
@@ -38,33 +43,36 @@ export function UnauthrorizedDialog(props) {
 
   const handleClose = (event, reason) => {
     onClose();
+    window.location.reload()
   };
  
 
 
   const exitClicked = (e) =>{
     onExitClicked()
-
+    window.location.reload()
   }
 
   return (
     <Dialog onClose={handleClose} open={open}  maxWidth={'sm'}>
-      <AntDialogTitle onClose={handleClose}>{t('You are unauthorized to join this room.')}</AntDialogTitle>
+      <AntDialogTitle onClose={handleClose}>{t('You are not authorized to join this live session.')}</AntDialogTitle>
       <DialogContent>
        
-    
-        <Button
-                  style={{marginTop:'35px'}}
+    <Box sx={{display:'flex',justifyContent: 'flex-end'}}>
+    <Button
+                  style={{marginTop:'0px'}}
 
             onClick={exitClicked}
             size='medium'
-            color="secondary"
+            color="primary"
             variant="contained"
             type="submit"
             id="exit_button"
         >
-        {t("Exit")}
+        {t("Okay")}
         </Button>
+    </Box>
+
 
 
       </DialogContent>

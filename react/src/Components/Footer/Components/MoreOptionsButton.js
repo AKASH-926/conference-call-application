@@ -11,17 +11,20 @@ import { useTranslation } from "react-i18next";
 import { ConferenceContext } from 'pages/AntMedia';
 import {GeneralSettingsDialog} from "./GeneralSettingsDialog";
 import {isMobile,isTablet} from "react-device-detect";
+import { SvgComponent } from "learnystIcons";
 
 const CustomizedBtn = styled(Button)(({ theme }) => ({
   "&.footer-icon-button": {
     height: "100%",
+    background: theme.palette.themeColor[90],
     [theme.breakpoints.down("sm")]: {
-      padding: 8,
+      // padding: 8,
       minWidth: "unset",
       width: "100%",
       "& > svg": {
         width: 36,
       },
+      paddingLeft: 16
     },
   },
 }));
@@ -81,7 +84,8 @@ function MoreOptionsButton({ footer, ...props }) {
                 aria-expanded={open ? "true" : undefined}
                 onClick={handleClick}
             >
-              <SvgIcon size={40} name={'option'} color={open ? 'black' : 'white'} />
+              {/* <SvgIcon size={40} name={'option'} color={open ? 'black' : 'white'} /> */}
+              <SvgComponent name={"option"} width="22px" height="20px"/>
             </CustomizedBtn>
           </Tooltip>
           <Menu
@@ -102,8 +106,9 @@ function MoreOptionsButton({ footer, ...props }) {
               }}
           >
 
-            {(conference.isPlayOnly === false) && (!isMobile) && (!isTablet) && (process.env.REACT_APP_FOOTER_SCREEN_SHARE_BUTTON_VISIBILITY === 'true') ?
-              <MenuItem onClick={() => {
+            {/* {(conference.isPlayOnly === false) && (!isMobile) && (!isTablet) && (process.env.REACT_APP_FOOTER_SCREEN_SHARE_BUTTON_VISIBILITY === 'true') ? */}
+              {/* <MenuItem 
+              onClick={() => {
                 if (conference.isScreenShared) {
                 conference.handleStopScreenShare();
               } else {
@@ -111,22 +116,24 @@ function MoreOptionsButton({ footer, ...props }) {
                 // send other that you are sharing screen.
               }
                 handleClose();
-              }}>
-                <ListItemIcon>
-                  <SvgIcon size={36} name={"share-screen-off"} color={"white"} />
+              }}
+              > */}
+                {/* <ListItemIcon>
+                  <SvgComponent name={"shareScreenOff"} width="22px" height="14px"/>
                 </ListItemIcon>
                 <ListItemText
                   id="more-options-share-screen-button"
                 >
                   {conference.isScreenShared ? t("You are presenting") : t("Present now")}
-                </ListItemText>
-              </MenuItem>
-              : null}
+                </ListItemText> */}
+              {/* </MenuItem> */}
+              {/* : null} */}
 
             {process.env.REACT_APP_FOOTER_REACTIONS_BUTTON_VISIBILITY === 'true' ?
               <MenuItem onClick={() => {conference.setShowEmojis(!conference.showEmojis); handleClose();}}>
                 <ListItemIcon>
-                  <SvgIcon size={36} name={'smiley-face'} color={"white"} />
+                  {/* <SvgIcon size={36} name={'smiley-face'} color={"white"} /> */}
+                  <SvgComponent name={"smilyFace"} width="20px" height="14px"/>
                 </ListItemIcon>
                 <ListItemText
                   id="more-options-reactions-button"
@@ -136,7 +143,7 @@ function MoreOptionsButton({ footer, ...props }) {
               </MenuItem>
               : null}
 
-            {(conference.isPlayOnly === false) && (process.env.REACT_APP_FOOTER_MESSAGE_BUTTON_VISIBILITY === 'true') ?
+            {(process.env.REACT_APP_FOOTER_MESSAGE_BUTTON_VISIBILITY === 'true') ? // show in playOnly mode
               <MenuItem onClick={() => {
                 if (!conference?.messageDrawerOpen) {
                   conference?.toggleSetNumberOfUnreadMessages(0);
@@ -145,7 +152,8 @@ function MoreOptionsButton({ footer, ...props }) {
                 handleClose();
               }}>
                 <ListItemIcon>
-                  <SvgIcon size={36} name={"message-off"} color={"white"} />
+                  {/* <SvgIcon size={36} name={"message-off"} color={"white"} /> */}
+                  <SvgComponent name={"message"} width="20px" height="14px"/>
                 </ListItemIcon>
                 <ListItemText id={"more-options-chat-button"}>{t("Chat")}</ListItemText>
               </MenuItem>
@@ -156,11 +164,28 @@ function MoreOptionsButton({ footer, ...props }) {
                   onClick={() => {conference?.handleParticipantListOpen(!conference?.participantListDrawerOpen); handleClose();}}
               >
                 <ListItemIcon>
-                  <SvgIcon size={36} name={"participants"} color={"white"} />
+                  {/* <SvgIcon size={36} name={"participants"} color={"white"} /> */}
+                  <SvgComponent name={"participants"} width="24px" height="14px"/>
                 </ListItemIcon>
                 <ListItemText id={"more-options-participant-list-button"}>{t("Participant List")}</ListItemText>
               </MenuItem>
               : null}
+
+            {conference.isPlayOnly === false ? (  //learnyst
+                <MenuItem
+                  onClick={() => {
+                    setDialogOpen(true);
+                    handleClose();
+                  }}
+                >
+                  <ListItemIcon>
+                    <SvgComponent name={'callSettings'} width='24px' height='14px' />
+                  </ListItemIcon>
+                  <ListItemText id={'more-options-participant-list-button'}>
+                    {t('Call settings')}
+                  </ListItemText>
+                </MenuItem>
+              ) : null}
           </Menu>
         </>
     );

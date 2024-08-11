@@ -5,11 +5,13 @@ import { SvgIcon } from '../../SvgIcon';
 import { Tooltip } from '@mui/material';
 import { useTranslation } from 'react-i18next';
 import { ConferenceContext } from 'pages/AntMedia';
+import { SvgComponent } from 'learnystIcons';
 
 
 const CustomizedBtn = styled(Button)(({ theme }) => ({
   '&.footer-icon-button':{
     height: '100%',
+    background: theme.palette.themeColor[90],
     [theme.breakpoints.down('sm')]:{
       padding: 8,
       minWidth: 'unset',
@@ -26,8 +28,8 @@ function ParticipantListButton({ footer }) {
     const {t} = useTranslation();
 
     return (
-            <Tooltip title={t('Participant List')} placement="top">
-                <CustomizedBtn
+      <Tooltip title={t('Participant List')} placement='top'>
+        {/* <CustomizedBtn
                     onClick={() => {
                         conference?.handleParticipantListOpen(!conference?.participantListDrawerOpen);
                     }}
@@ -38,10 +40,32 @@ function ParticipantListButton({ footer }) {
                 >
                     <SvgIcon size={32} color={conference?.participantListDrawerOpen ? 'black' : 'white'} name={'participants'} />
                   {/* eslint-disable-next-line jsx-a11y/anchor-is-valid */}
-                    <a style={{color: conference?.participantListDrawerOpen ? 'black' : 'white'}}>{Object.keys(conference.allParticipants).length}</a>
-                </CustomizedBtn>
-            </Tooltip>
-        );
+        {/* <a style={{color: conference?.participantListDrawerOpen ? 'black' : 'white'}}>{Object.keys(conference.allParticipants).length}</a>
+                </CustomizedBtn> */}
+        <CustomizedBtn
+          onClick={() => {
+            conference?.handleParticipantListOpen(!conference?.participantListDrawerOpen);
+          }}
+          id='participant-list-button'
+          variant='outlined'
+          className={footer ? 'footer-icon-button' : ''}
+          color={conference?.participantListDrawerOpen ? 'secondary' : 'inherit'}
+          sx={{ border: '2px solid white', boxShadow: 'rgba(0, 0, 0, 0.24) 0px 3px 8px' }}
+        >
+          <SvgComponent
+            name={'participants'}
+            width='24px'
+            height='14px'
+            fill={conference?.participantListDrawerOpen ? '#8ab4f8' : '#ffffff'}
+          />
+          {!conference.isPlayOnly && (
+            <a style={{ color: conference?.participantListDrawerOpen ? '#8ab4f8' : '#ffffff' }}>
+              {conference.learnystParticipantList?.length || 0}
+            </a>
+          )}
+        </CustomizedBtn>
+      </Tooltip>
+    );
 }
 
 export default ParticipantListButton;

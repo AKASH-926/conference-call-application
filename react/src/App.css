@@ -73,7 +73,7 @@ form {
   overflow: hidden;
   border-radius: 4px;
 }
-.single-video-card .talking-indicator-light {
+/* .single-video-card .talking-indicator-light {
   border: 2px solid;
   position: absolute;
   top: 0;
@@ -82,6 +82,18 @@ form {
   height: 100%;
   border-radius: 4px;
   z-index: 10;
+} */
+
+.single-video-card .talking-indicator-light {
+  position: absolute;
+  top: 2%;
+  left: 1%;
+  border-radius: 50%;
+  z-index: 10;
+  -webkit-border-radius: 50%;
+  -moz-border-radius: 50%;
+  -ms-border-radius: 50%;
+  -o-border-radius: 50%;
 }
 
 .single-video-card .name-indicator {
@@ -146,7 +158,7 @@ form {
 }
 
 .single-video-container.pinned {
-  width: 82.5% !important;
+  width: 95% !important;
   aspect-ratio: 16 / 9;
 }
 
@@ -158,8 +170,20 @@ form {
   overflow: hidden;
   flex-direction: column;
   padding-right: 8px;
-  height: 100%;
+  /* height: 100%; */
   margin-left: auto;
+  position: fixed;
+  top: 0;
+  left: 0; /* Added to support dragging in all directions */
+  z-index: 1000;
+  background-color: rgba(255, 255, 255, 0);
+  cursor: grab;
+  transition: background-color 0.3s ease; /* Add transition for smooth color change */
+}
+
+#unpinned-gallery.dragging {
+  background-color: rgba(255, 255, 255, 0.8); /* Example: Lighter background when dragging */
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.2); /* Example: Shadow effect when dragging */
 }
 
 .unpinned {
