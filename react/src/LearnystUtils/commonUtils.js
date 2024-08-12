@@ -39,7 +39,7 @@ export function roomJoineeName() {
 
 export const endLiveWebinar = () => {
   const {liveLessonId} = safeParseJSON(getSessionConfigData())
-  const url = `https://api-akash.learnyst.com/admin/v5/live_lessons/${liveLessonId}`;
+  const url = `https://api.learnyst.com/admin/v5/live_lessons/${liveLessonId}`;
   const data = {
       status : "completed"
   };

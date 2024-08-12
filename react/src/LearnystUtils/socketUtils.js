@@ -26,8 +26,8 @@ const connectSocket = () => {
       timeout: 20000, // Connection timeout before giving up
       auth: {
         token:
-        authToken ?? 'eyJhbGciOiJIUzI1NiJ9.eyJ1aWQiOjc5MzA0MTcsInNpZCI6MTUyNDMyLCJleHAiOjE3MjMyMTY2OTYsInR5cCI6NCwibG9rIjoiMDAwMCIsInRvayI6Ikd6RmROanIwWGpJR2Q1bUEwUlBNWkEiLCJ0aW1lIjoxNzIzMTg3ODk2fQ.iDU_DY39bobnu__DIV2sWTJqxQKHKAdbAAGU8R5dijw',
-        envType: 'test',
+        authToken,
+        envType: 'prod',
       }
     });
 
@@ -90,14 +90,14 @@ const handleSocketActions = (actionData, callback) => {
   const { schoolId, userId, userName } = schoolData;
   const commandData = {
     command: actionData?.command,
-    school_id: schoolId || 152432,
+    school_id: schoolId,
     user_data: {
-      user_id: userId || 7930417,
-      user_name: isPlayOnly ? userName || "Deadpool" : `${userName} (Host)`
+      user_id: userId,
+      user_name: isPlayOnly ? userName : `${userName} (Host)`
     },
     room_data: {
-      room_type: actionData?.roomType || 1,
-      room_id: roomId || 2228487,
+      room_type: actionData?.roomType,
+      room_id: roomId,
     },
     ...(actionData?.command === LEARNYST_SOCKET_NOTIFICATIONS.NEW_MESSAGE
       ? {
@@ -115,7 +115,6 @@ const handleSocketActions = (actionData, callback) => {
     if (err) {
       console.error('Socket action failed',err);
     } else {
-      console.log('=====>commandData',commandData,response);
       callback(response)
     }
   });
@@ -137,7 +136,7 @@ const leaveLearnystRoom = () => {
     roomType: LEARNYST_ROOM_TYPE.LIVE_CLASS_CHAT,
   };
   handleSocketActions(actionData, (respone) => {
-    console.log('response', respone);
+    // console.log('response', respone);
   });
 }
 
