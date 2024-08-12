@@ -98,7 +98,7 @@ function WaitingRoom(props) {
   const currentTime = new Date().getTime();
    const timeRemaining = newEndTime - currentTime;
   let {liveClassStatus} = safeParseJSON(getSessionConfigData())
-  const isLiveClassActive = timeRemaining > 0 && liveClassStatus == LIVE_CLASS_STATUS.LIVE
+  const isLiveClassActive = timeRemaining > 0 && (liveClassStatus == LIVE_CLASS_STATUS.LIVE || liveClassStatus == LIVE_CLASS_STATUS.UPCOMING )
 
   const getLearnystRoomOnlineUser = () => {
     const actionData = {
