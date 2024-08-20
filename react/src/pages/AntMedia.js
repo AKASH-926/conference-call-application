@@ -846,6 +846,7 @@ function AntMedia(props) {
     const [learnystParticipantList, setLearnystParticipantList] = React.useState([ ]);
     const [learnystEmojiReaction, setLearnystEmojiReaction] = React.useState({emoji: '', userName: ''})
     const learnystSocketHeartBeatRef = React.useRef(null);
+    const [isFullScreen, setIsFullScreen] = useState(false)
     const sessionConfigData = safeParseJSON(getSessionConfigData())
 
     useEffect(() => {
@@ -2359,7 +2360,9 @@ function AntMedia(props) {
                         setIsScreenShared,
                         setBlackScreenTitle,
                         learnystSocketHeartBeatRef,
-                        sessionConfigData
+                        sessionConfigData,
+                        setIsFullScreen,
+                        isFullScreen
                     }}
                 >
                     {props.children}

@@ -170,7 +170,7 @@ const MeetingRoom = React.memo((props) => {
           style={{display: "none"}}
         />
       ))}
-      <div id="meeting-gallery" style={{height: "calc(100vh - 60px)"}}>
+      <div id="meeting-gallery" style={{height: conference.isFullScreen ? "100vh" : "calc(100vh - 60px)"}}>
         <>
           {pinLayout ?
             (<LayoutPinned
@@ -205,9 +205,9 @@ const MeetingRoom = React.memo((props) => {
         // onMouseEnter={handleFooterMouseEnter}
         // onMouseLeave={handleFooterMouseLeave}  // auto hide footer code
         style={{
-          // opacity: footerVisible ? 1 : 0,
-          // transition: "opacity 0.5s ease-in-out",
-          // zIndex: footerVisible ? theme.zIndex.drawer + 1 : theme.zIndex.drawer - 1,
+          opacity: !conference.isFullScreen ? 1 : 0,
+          transition: "opacity 0.5s ease-in-out",
+          zIndex: !conference.isFullScreen  ? theme.zIndex.drawer + 1 : theme.zIndex.drawer - 1,
           zIndex: theme.zIndex.drawer + 1 
         }}
       >
