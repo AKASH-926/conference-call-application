@@ -8,6 +8,7 @@ import { useTranslation } from "react-i18next";
 import { isMobile, isTablet } from 'react-device-detect';
 import { SvgComponent } from "learnystIcons";
 import { getSchoolDetails } from "LearnystUtils/commonUtils";
+import { useSnackbar } from "notistack";
 
 const CustomizedVideo = styled("video")({
   borderRadius: 4,
@@ -28,6 +29,7 @@ function VideoCard(props) {
   const theme = useTheme();
   const schoolData = getSchoolDetails();
   const { userName } = schoolData;
+  const { enqueueSnackbar } = useSnackbar();
 
   const cardBtnStyle = {
     display: "flex",
@@ -113,6 +115,23 @@ function VideoCard(props) {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [conference.isPublished]);
+
+    useEffect(() => {
+      const handleKeyDown = (event) => {
+        if (event.key === 'Escape' || event.keyCode === 27) {
+          if(conference.isFullScreen) {
+            handleFullScreenAction();
+          }
+        }
+      };
+
+      window.addEventListener('keydown', handleKeyDown);
+
+      // Clean up the event listener when the component unmounts
+      return () => {
+        window.removeEventListener('keydown', handleKeyDown);
+      };
+    },[]);
 
     const overlayButtonsGroup = () => {
         if (process.env.REACT_APP_VIDEO_OVERLAY_ADMIN_MODE_ENABLED === "true") {
@@ -461,17 +480,17 @@ function VideoCard(props) {
           top: 0,
           left: 0,
           p: { xs: 1, md: 2 },
-          zIndex: 9
+          zIndex: 9,
         }}
       >
-          <Tooltip title={t("Full screen")} placement="top">
+          <Tooltip title={conference.isFullScreen ? t("Exit Full screen") : t("Enter Full screen")} placement="top">
             <Grid item>
               <CustomizedBox
                 id={"full-screen-"+props.trackAssignment.streamId}
-                sx={{...cardBtnStyle, cursor: "pointer"}}
+                sx={{...cardBtnStyle, cursor: "pointer", background : conference.isFullScreen ?  "#fff" : alpha(theme.palette.gray[90], 0.3) , width: '40px', height: '40px'}}
                 onClick={()=>handleFullScreenAction()}
                 >
-                <SvgComponent name="resolution" width="18px" height="18px" fill="#fff" />
+                <SvgComponent name="resolution" width="20px" height="20px" fill= {conference.isFullScreen ?  "#1a73e8" : "#fff"} />
               </CustomizedBox>
             </Grid>
           </Tooltip>
@@ -543,12 +562,21 @@ function VideoCard(props) {
   };
 
   const handleFullScreenAction = () => {
-    if (!document.fullscreenElement) {
-      document.documentElement
-        .requestFullscreen()
-        .then((r) => console.log('Fullscreen is requested', r));
-    } else {
-      document.exitFullscreen().then((r) => console.log('Fullscreen is exited', r));
+    // if (!document.fullscreenElement) {
+    //   document.documentElement
+    //     .requestFullscreen()
+    //     .then((r) => console.log('Fullscreen is requested', r));
+    // } else {
+    //   document.exitFullscreen().then((r) => console.log('Fullscreen is exited', r));
+    // }
+    conference.setIsFullScreen(!conference.isFullScreen)
+    if(!conference.isFullScreen) {
+      enqueueSnackbar({
+        message:   t('Press `Esc` or `FullScreen Button` to exit fullscreen.') ,
+        variant: 'info',
+      }, {
+        autoHideDuration: 800,
+      });
     }
   }
 
