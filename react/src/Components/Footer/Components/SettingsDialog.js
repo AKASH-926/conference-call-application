@@ -13,6 +13,7 @@ import { SvgIcon } from 'Components/SvgIcon';
 import { useTheme } from '@mui/material';
 import { useTranslation } from 'react-i18next';
 import { SvgComponent } from 'learnystIcons';
+import { DialogBox } from 'Components/LearnystComponents/DialogBox';
 
 const AntDialogTitle = props => {
   const { children, onClose, ...other } = props;
@@ -42,7 +43,8 @@ export default function SettingsDialog(props) {
   const { t } = useTranslation();
   const { onClose, selectedValue, open, selectFocus } = props;
   const conference = React.useContext(ConferenceContext);
-
+  const [showDialog, setShowDialog] = React.useState(false);
+  const [selectedVideoResolution, setSelectedVideoResolution] = React.useState(false);
   const theme = useTheme();
   const fullScreen = useMediaQuery(theme.breakpoints.down('xs'));
 
@@ -69,6 +71,7 @@ export default function SettingsDialog(props) {
   }, [conference.devices]);
 
   return (
+    <>
     <Dialog onClose={handleClose} open={open} fullScreen={fullScreen} maxWidth={'sm'}>
       <AntDialogTitle onClose={handleClose}>{t('Set Camera and Microphone')}</AntDialogTitle>
       <DialogContent>
@@ -111,18 +114,18 @@ export default function SettingsDialog(props) {
             </Grid>
             <Grid container alignItems={'center'} spacing={2}>
               <Grid item xs={10}>
-                <Select variant="outlined" fullWidth value={conference.videoSendResolution} onChange={e => conference.setVideoSendResolution(e.target.value)} sx={{ color: 'black' }}>
+                <Select variant="outlined" disabled={props?.isVideoResolutionDisabled} fullWidth value={localStorage.getItem("videoSendResolution") || 'standardDefinition'} onChange={e => {conference.setVideoSendResolution(e.target.value);setSelectedVideoResolution(e.target.value);setShowDialog(true); onClose(true)}} sx={{ color: 'black' }}>
                   <MenuItem key="auto" value="auto">
                     {t('Auto')}
                   </MenuItem>
                   <MenuItem key="high-definition" value="highDefinition">
-                    {t('High definition (720p)')}
+                    {t('High definition')}
                   </MenuItem>
                   <MenuItem key="standart-definition" value="standardDefinition">
-                    {t('Standard definition (360p)')}
+                    {t('Standard definition')}
                   </MenuItem>
                   <MenuItem key="low-definition" value="lowDefinition">
-                    {t('Low definition (180p)')}
+                    {t('Low definition')}
                   </MenuItem>
                 </Select>
               </Grid>
@@ -161,6 +164,20 @@ export default function SettingsDialog(props) {
         </Box>
       </DialogContent>
     </Dialog>
+    
+    <DialogBox
+        open={showDialog}
+        onClose={() => setShowDialog(false)}
+        primaryAction={() => {
+          conference.setVideoQualityConstraints(selectedVideoResolution)
+          window.location.reload()
+        }}
+        closeButtonText={'Cancel'}
+        primaryActionText={'Reload'}
+        dialogDescription={"Changes will take effect after you reload the page"}
+      />
+    </>
+
   );
 }
 

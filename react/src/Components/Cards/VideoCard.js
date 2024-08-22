@@ -60,8 +60,33 @@ function VideoCard(props) {
     useAvatar = !parseMetaDataAndGetIsCameraOn(metaData) && !parseMetaDataAndGetIsScreenShared(metaData);
   }
 
-  if(props?.trackAssignment.isMine) {
-    conference.setBlackScreenTitle(userName ? `${userName} (Host)`: 'stream is off');
+  const videoResolution = localStorage.getItem("videoSendResolution") || conference.videoSendResolution
+
+  if (props?.trackAssignment.isMine) {
+    conference.setBlackScreenProperties({
+      canvasWidth: conference.videoQualityConstraints.video.width.ideal,
+      canvasHeight: conference.videoQualityConstraints.video.height.ideal,
+      canvasTitle: userName ? `${userName} (Host)` : 'stream is off',
+      ...(videoResolution === 'highDefinition'
+        ? {
+            canvasTitleFontSize: '40px',
+            canvasCircleRadius: 65,
+          }
+        : {}),
+      ...(videoResolution === 'standardDefinition' || 
+        videoResolution === 'auto'
+        ? {
+            canvasTitleFontSize: '30px',
+            canvasCircleRadius: 50,
+          }
+        : {}),
+      ...(videoResolution === 'lowDefinition'
+        ? {
+            canvasTitleFontSize: '16px',
+            canvasCircleRadius: 30,
+          }
+        : {}),
+    });
   }
 
   function isJsonString(str) {
@@ -399,11 +424,14 @@ function VideoCard(props) {
         <Grid
           container
           // sx={useAvatar ? { display: "none" } : {}}
-          sx={useAvatar ? {  } : {}}
+          sx={useAvatar ? {} : {}}
           style={{
-            height: "100%",
-            transform: mirrorView ? "rotateY(180deg)" : "none",
-            transform: "none"
+            height: '100%',
+            // transform:
+            //   mirrorView && !conference.isScreenShared && !conference?.isMyCamTurnedOff
+            //     ? 'rotateY(180deg)'
+            //     : 'none',
+            transform: 'none'
           }}
         >
           <CustomizedVideo

@@ -44,7 +44,7 @@ function CallSettingsButton({ footer, ...props }) {
   };
   return (
     <>
-      <SettingsDialog open={dialogOpen} onClose={handleDialogClose} selectFocus={selectFocus} />
+      <SettingsDialog open={dialogOpen} onClose={handleDialogClose} selectFocus={selectFocus} isVideoResolutionDisabled={true}/>
         <Tooltip title={t('Call settings')} placement='top'>
           <CustomizedBtn
             onClick={() => {

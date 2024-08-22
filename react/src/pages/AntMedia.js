@@ -128,13 +128,17 @@ var scroll_down = true;
 var last_warning_time = null;
 
 var videoQualityConstraints = {
+  ...(safeParseJSON(localStorage.getItem('videoQualityConstraints')) ?? {
     video: {
-        width: {ideal: 640},
-        height: {ideal: 360},
-        frameRate: { max: 15},
-        aspectRatio: {ideal: 1.77778}
-    }
-}
+      width: { ideal: 640 },
+      height: { ideal: 360 }, //  360p 
+      frameRate: { max: 15 }, // Optionally increase the frame rate to 30 fps for better quality
+      aspectRatio: { ideal: 1.77778 }, // 16:9 aspect ratio
+    },
+  }),
+};
+
+
 
 var audioQualityConstraints = {
     audio: {
@@ -1756,7 +1760,6 @@ function AntMedia(props) {
     function updateVideoSendResolution(isPinned) {
         let promise = null;
         let mediaConstraints = {video: true};
-
         if (isScreenShared) {
             mediaConstraints = getMediaConstraints("screenConstraints", 20);
             promise = webRTCAdaptor?.applyConstraints(mediaConstraints);
@@ -2082,9 +2085,61 @@ function AntMedia(props) {
         });
     }
 
-    function setBlackScreenTitle (title) {
-        webRTCAdaptor.mediaManager.dummyCanvasTitle = title // displayed when no stream is present
+    const setVideoQualityConstraints = (quality) => {
+      if (quality === 'auto') {
+        videoQualityConstraints = {
+          video: {
+            width: { ideal: 640 },
+            height: { ideal: 360 }, // 360p
+            frameRate: { max: 15 },
+            aspectRatio: { ideal: 1.77778 },
+          },
+        };
+      }
+      if (quality === 'highDefinition') {
+        videoQualityConstraints = {
+          video: {
+            width: { ideal: 1280 },
+            height: { ideal: 720 }, // 720p
+            frameRate: { max: 15 },
+            aspectRatio: { ideal: 1.77778 },
+          },
+        };
+      }
+      if (quality === 'standardDefinition') {
+        videoQualityConstraints = {
+          video: {
+            width: { ideal: 640 },
+            height: { ideal: 360 }, //  360p
+            frameRate: { max: 15 },
+            aspectRatio: { ideal: 1.77778 },
+          },
+        };
+      }
+      if (quality === 'lowDefinition') {
+        videoQualityConstraints = {
+          video: {
+            width: { ideal: 320 },
+            height: { ideal: 180 }, // 180p
+            frameRate: { max: 15 },
+            aspectRatio: { ideal: 1.77778 },
+          },
+        };
+      }
+      localStorage.setItem('videoQualityConstraints', JSON.stringify(videoQualityConstraints));
+      localStorage.setItem('videoSendResolution', quality);
+    };
+
+    function setBlackScreenProperties ({canvasWidth, canvasHeight, canvasTitle,canvasTitleFontSize, canvasCircleRadius }) {
+        webRTCAdaptor.mediaManager.dummyCanvasTitle = canvasTitle // displayed when no stream is present
+        webRTCAdaptor.mediaManager.dummyCanvasProperties = {
+            canvasWidth,
+            canvasHeight,
+            canvasTitleFontSize,
+            canvasCircleRadius
+        }
     }
+
 
      function stopScreenShare() { //  to stop compose screen share + camera
         try {
@@ -2110,12 +2165,7 @@ function AntMedia(props) {
     
 
     function switchVideoMode(videoMode, cameraPosition = "top-left") {
-        webRTCAdaptor.mediaManager.switchVideoCameraMediaConstraints = {
-          width: { ideal: 640 },
-          height: { ideal: 360 },
-          frameRate: { max: 15 },
-          aspectRatio: { ideal: 1.77778 },
-        };
+        webRTCAdaptor.mediaManager.switchVideoCameraMediaConstraints = videoQualityConstraints['video']
 		if (videoMode == "screen") {
 			webRTCAdaptor.switchDesktopCapture(publishStreamId);
 		}
@@ -2358,11 +2408,13 @@ function AntMedia(props) {
                         switchVideoMode,
                         stopScreenShare,
                         setIsScreenShared,
-                        setBlackScreenTitle,
+                        setBlackScreenProperties,
                         learnystSocketHeartBeatRef,
                         sessionConfigData,
                         setIsFullScreen,
-                        isFullScreen
+                        isFullScreen,
+                        setVideoQualityConstraints,
+                        videoQualityConstraints
                     }}
                 >
                     {props.children}
