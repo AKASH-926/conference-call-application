@@ -851,6 +851,7 @@ function AntMedia(props) {
     const [learnystEmojiReaction, setLearnystEmojiReaction] = React.useState({emoji: '', userName: ''})
     const learnystSocketHeartBeatRef = React.useRef(null);
     const [isFullScreen, setIsFullScreen] = useState(false)
+    const [isDrawerScreenPopout, setIsDrawerScreenPopout] = useState(false)
     const sessionConfigData = safeParseJSON(getSessionConfigData())
 
     useEffect(() => {
@@ -895,8 +896,8 @@ function AntMedia(props) {
             console.log("Cleanup function triggered");
 
             unsubscribeFromEvent('notification', handleReceiveNotifcation)
-            leaveLearnystRoom();
-            disconnectSocket();
+            // leaveLearnystRoom();
+            // disconnectSocket();
         };
     },[])
 
@@ -2414,7 +2415,9 @@ function AntMedia(props) {
                         setIsFullScreen,
                         isFullScreen,
                         setVideoQualityConstraints,
-                        videoQualityConstraints
+                        videoQualityConstraints,
+                        setIsDrawerScreenPopout,
+                        isDrawerScreenPopout
                     }}
                 >
                     {props.children}
