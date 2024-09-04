@@ -110,7 +110,7 @@ const MeetingRoom = React.memo((props) => {
           gallery.classList.remove("drawer-open");
         }
       }
-      if(conference.isDrawerScreenPopout){
+      if(conference.isDrawerScreenPopout && !conference.participantListDrawerOpen){
         gallery.classList.remove("drawer-open");
       }
       const screenWidth = gallery.getBoundingClientRect().width;

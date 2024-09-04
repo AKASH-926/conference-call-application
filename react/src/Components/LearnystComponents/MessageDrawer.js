@@ -1,7 +1,7 @@
 import * as React from 'react';
 import Drawer from '@mui/material/Drawer';
 import { styled } from '@mui/material/styles';
-import { Grid, Tabs, Tab, IconButton } from '@mui/material';
+import { Grid, Tabs, Tab, IconButton, Button } from '@mui/material';
 import MessageInput from './MessageInput';
 import { useTranslation } from 'react-i18next';
 import MessagesTab from './MessagesTab';
@@ -13,6 +13,8 @@ import {
 } from 'LearnystUtils/socketUtils';
 import { LEARNYST_ROOM_TYPE, LEARNYST_SOCKET_COMMANDS, LEARNYST_SOCKET_NOTIFICATIONS, MESSAGE_TYPE } from 'learnystConstants';
 import PopoutIcon from '@mui/icons-material/OpenInNew'; // Icon for pop-out button
+import { isMobile, isTablet } from 'react-device-detect';
+import { SvgComponent } from 'learnystIcons';
 
 const AntDrawer = styled(Drawer)(({ theme }) => getAntDrawerStyle(theme));
 
@@ -45,7 +47,7 @@ const ResizeHandle = styled('div')(({ position }) => ({
 const MessageDrawer = React.memo((props) => {
   const [value, setValue] = React.useState(0);
   const [messages, setMessages] = React.useState([]);
-  const [position, setPosition] = React.useState({ x: 1000, y: 0 });
+  const [position, setPosition] = React.useState({ x: 0, y: 0 });
   const [dragging, setDragging] = React.useState(false);
   const [resizing, setResizing] = React.useState(false); // State for resizing
   const [resizePosition, setResizePosition] = React.useState(null); // State for resize handle position
@@ -136,28 +138,38 @@ const MessageDrawer = React.memo((props) => {
 
   const handleMouseMove = (event) => {
     if (dragging) {
-      if (
-        event.clientY - dragStart.y >= 0 &&
-        event.clientY - dragStart.y <= 720 &&
-        event.clientX - dragStart.x >= -275 &&
-        event.clientX - dragStart.x <= 1350
-      ) {
-        setPosition({
-          x: event.clientX - dragStart.x,
-          y: event.clientY - dragStart.y,
-        });
-      }
+      const viewportWidth = window.innerWidth;
+      const viewportHeight = window.innerHeight;
+      const elementWidth = drawerSize.width;
+      const elementHeight = drawerSize.height;
+      const minX = 0;
+      const minY = 0;
+      const maxX = viewportWidth - elementWidth;
+      const maxY = viewportHeight - elementHeight;
+      const newX = event.clientX - dragStart.x;
+      const newY = event.clientY - dragStart.y;
+  
+      const clampedX = Math.max(minX, Math.min(newX, maxX));
+      const clampedY = Math.max(minY, Math.min(newY, maxY));
+  
+      setPosition({
+        x: clampedX,
+        y: clampedY,
+      });
     }
+  
     if (resizing) {
       if (resizePosition === 'right') {
+        const newWidth = Math.max(300, event.clientX - position.x);
         setDrawerSize((prevSize) => ({
-          width: prevSize.width + (event.clientX - prevSize.width),
+          width: newWidth,
           height: prevSize.height,
         }));
       } else if (resizePosition === 'bottom') {
+        const newHeight = Math.max(100, event.clientY - position.y);
         setDrawerSize((prevSize) => ({
           width: prevSize.width,
-          height: prevSize.height + (event.clientY - prevSize.height),
+          height: newHeight,
         }));
       }
     }
@@ -178,13 +190,14 @@ const MessageDrawer = React.memo((props) => {
     conference.setIsDrawerScreenPopout(!conference?.isDrawerScreenPopout)
     if (!conference?.isDrawerScreenPopout) {
       // Reset position when popping back in
-      setPosition({ x: 1000, y: 50 });
+      const viewportWidth = window.innerWidth;
+      setPosition({ x: viewportWidth - drawerSize.width - 0, y: 0 });
       setDrawerSize({ width: 400, height: 600 }); // Reset size when docking back
     }
   };
 
   React.useEffect(() => {
-    if (conference?.isDrawerScreenPopout) {
+    if (conference?.isDrawerScreenPopout && !isMobile && !isTablet) {
       window.addEventListener('mousemove', handleMouseMove);
       window.addEventListener('mouseup', handleMouseUp);
     } else {
@@ -241,21 +254,23 @@ const MessageDrawer = React.memo((props) => {
               {...a11yProps(0)}
             />
           </Tabs>
-          <Grid sx={{display: 'flex'}}>
-          <IconButton onClick={togglePopout} title={conference?.isDrawerScreenPopout ? 'Dock Back' : 'Pop Out'}>
-              <PopoutIcon fontSize='small' sx={{color: '#000000'}}/>
+          <Grid sx={{ display: 'flex' }}>
+            <IconButton
+              onClick={togglePopout}
+              title={conference?.isDrawerScreenPopout ? 'Dock Back' : 'Pop Out'}
+            >
+              <PopoutIcon fontSize='small' sx={{ color: '#000000' }} />
             </IconButton>
-          <div onClick={()=>conference?.setIsDrawerScreenPopout(false)}>
-          <CloseDrawerButton />
-          </div>
+            <Button sx={{ minWidth: 30 }} onClick={() => {conference?.setIsDrawerScreenPopout(false)}}>
+             <SvgComponent name="close" width="18px" height="18px" fill={"#000000"}/>
+             </Button>
           </Grid>
-
         </Grid>
         <Grid
           item
           container
-          justifyContent="space-between"
-          alignItems="center"
+          justifyContent='space-between'
+          alignItems='center'
           style={{ flex: '1 1 auto', overflowY: 'hidden' }}
         >
           <TabPanel value={value} index={0}>
@@ -303,9 +318,14 @@ const MessageDrawer = React.memo((props) => {
             />
           </Tabs>
           <Grid>
-            <IconButton onClick={togglePopout} title={conference?.isDrawerScreenPopout ? 'Dock Back' : 'Pop Out'}>
-              <PopoutIcon fontSize='small' sx={{color: '#000000'}}/>
-            </IconButton>
+            {!isMobile && !isTablet ? (
+              <IconButton
+                onClick={togglePopout}
+                title={conference?.isDrawerScreenPopout ? 'Dock Back' : 'Pop Out'}
+              >
+                <PopoutIcon fontSize='small' sx={{ color: '#000000' }} />
+              </IconButton>
+            ) : null}
             <CloseDrawerButton />
           </Grid>
         </Grid>
