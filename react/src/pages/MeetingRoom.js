@@ -44,7 +44,7 @@ const MeetingRoom = React.memo((props) => {
 
   React.useEffect(() => {
     handleGalleryResize(true);
-  }, [conference.messageDrawerOpen, conference.participantListDrawerOpen, conference.effectsDrawerOpen]);
+  }, [conference.messageDrawerOpen, conference.participantListDrawerOpen, conference.effectsDrawerOpen, conference.isDrawerScreenPopout]);
 
   React.useEffect(() => {
     const debouncedHandleResize = debounce(handleGalleryResize, 500);
@@ -109,6 +109,9 @@ const MeetingRoom = React.memo((props) => {
         } else {
           gallery.classList.remove("drawer-open");
         }
+      }
+      if(conference.isDrawerScreenPopout && !conference.participantListDrawerOpen){
+        gallery.classList.remove("drawer-open");
       }
       const screenWidth = gallery.getBoundingClientRect().width;
       const screenHeight = gallery.getBoundingClientRect().height;

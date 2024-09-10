@@ -51,17 +51,23 @@ function MessageButton({ footer, ...props }) {
         </CustomizedBtn> */}
         <CustomizedBtn
           onClick={() => {
-            if (!conference?.messageDrawerOpen) {
+            if (!conference?.messageDrawerOpen || !conference?.isDrawerScreenPopout) {
               conference?.toggleSetNumberOfUnreadMessages(0);
+            } 
+            if (conference?.isDrawerScreenPopout) {
+              conference.setIsDrawerScreenPopout(false);
+              conference?.handleMessageDrawerOpen(false)
+              return
             }
             conference?.handleMessageDrawerOpen(!conference?.messageDrawerOpen);
           }}
-          variant={conference?.messageDrawerOpen ? "contained" : "outlined"}
+          variant={conference?.messageDrawerOpen || conference?.isDrawerScreenPopout ? "contained" : "outlined"}
           className={footer ? 'footer-icon-button' : ''}
-          color={conference?.messageDrawerOpen ? 'secondary' : 'inherit'}
+          color={conference?.messageDrawerOpen || conference?.isDrawerScreenPopout ? 'secondary' : 'inherit'}
           sx={{border: '2px solid white', boxShadow: 'rgba(0, 0, 0, 0.24) 0px 3px 8px'}}
+          disabled={conference?.isDrawerScreenPopout && conference.participantListDrawerOpen}
         >
-          <SvgComponent name={"message"} width="20px" height="14px" fill={conference?.messageDrawerOpen ? "#8ab4f8" : "#ffffff"}/>
+          <SvgComponent name={"message"} width="20px" height="14px" fill={conference?.messageDrawerOpen || conference?.isDrawerScreenPopout ? "#8ab4f8" : "#ffffff"}/>
         </CustomizedBtn>
       </Tooltip>
     </Badge>
