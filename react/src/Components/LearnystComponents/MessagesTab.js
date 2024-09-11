@@ -51,7 +51,7 @@ function MessagesTab(props) {
           variant='body2'
           align='center'
         >
-          {t('Messages can only be seen by people in the call and are deleted when the call ends.')}
+          {t('Discussions can only be seen by people in the call and are deleted when the call ends.')}
         </Typography>
       </TextContainer>
       <Grid
@@ -59,7 +59,7 @@ function MessagesTab(props) {
         container
         sx={{ mt: 1 }}
         id='paper-props'
-        style={{ flexWrap: 'nowrap', flex: 'auto', overflowY: 'auto' }}
+        style={{ flexWrap: 'nowrap', flex: 'auto', overflowY: 'auto',marginBottom: '59px' }}
       >
         {' '}
         <Grid item xs={12}>

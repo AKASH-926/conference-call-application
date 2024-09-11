@@ -33,8 +33,8 @@ const TabGrid = styled(Grid)(({ theme }) => ({
 }));
 
 const ResizeHandle = styled('div')(({ position }) => ({
-  width: position === 'left' || position === 'right' ? '8px' : '100%',
-  height: position === 'top' || position === 'bottom' ? '8px' : '100%',
+  width: position === 'left' || position === 'right' ? '2px' : '100%',
+  height: position === 'top' || position === 'bottom' ? '2px' : '100%',
   backgroundColor: '#ccc',
   position: 'absolute',
   left: position === 'left' ? 0 : 'auto',
@@ -234,7 +234,7 @@ const MessageDrawer = React.memo((props) => {
       <MessageGrid
         container
         direction="column"
-        style={{ flexWrap: 'nowrap', height: 'calc(100% - 20px)', overflow: 'hidden' }} // Adjusted height to account for resize handles
+        style={{ flexWrap: 'nowrap', height: '100%', overflow: 'hidden' }} // Adjusted height to account for resize handles
       >
         <Grid item container justifyContent="space-between" alignItems="center" onMouseDown={handleMouseDown} sx={{cursor: 'move'}}>
           <Tabs
@@ -245,12 +245,12 @@ const MessageDrawer = React.memo((props) => {
             }}
             value={value}
             onChange={handleChange}
-            aria-label="messages and participant tabs"
+            aria-label="discussion and participant tabs"
           >
             <Tab
               disableRipple
               sx={{ color: '#000000 !important', p: 1, pl: 0 }}
-              label={t('Messages')}
+              label={t('Discussions')}
               {...a11yProps(0)}
             />
           </Tabs>
@@ -313,7 +313,7 @@ const MessageDrawer = React.memo((props) => {
             <Tab
               disableRipple
               sx={{ color: '#000000 !important', p: 1, pl: 0 }}
-              label={t('Messages')}
+              label={t('Discussions')}
               {...a11yProps(0)}
             />
           </Tabs>

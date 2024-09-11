@@ -12,11 +12,19 @@ const MessageInputContainer = styled(Grid)(({ theme }) => ({
     width: '100%',
     padding: '16px 0px 8px 0px',
   },
-  marginBottom: '15px'
+  position: 'absolute',
+  bottom: 0,
+  left: 0,
+  marginLeft: '2px',
+  marginRight: '2px',
+  boxShadow: 'rgba(0, 0, 0, 0.1) 0px 0px 5px 0px, rgba(0, 0, 0, 0.1) 0px 0px 1px 0px',
+  borderRadius: 10,
+  borderTopLeftRadius: 0,
+  borderTopRightRadius: 0
 }));
 const MessageTextField = styled(TextField)(({ theme }) => ({
   '& .MuiOutlinedInput-root': {
-    borderRadius: 30,
+    borderRadius: 10,
     backgroundColor: theme.palette.themeColor[20],
     color: '#000000',
     padding: "5px"
@@ -26,7 +34,7 @@ const MessageTextField = styled(TextField)(({ theme }) => ({
     fontWeight: 400,
   },
   '& .MuiOutlinedInput-notchedOutline': {
-    borderRadius: 30,
+    borderRadius: 10,
   },
 }));
 const MessageInput = React.memo((props) => {
@@ -109,7 +117,7 @@ const MessageInput = React.memo((props) => {
                       sendMessage();
                     }
                   }}
-                  aria-label='send message'
+                  aria-label='Start a discussion'
                   size={'medium'}
                   edge='end'
                 >
@@ -130,7 +138,7 @@ const MessageInput = React.memo((props) => {
             ),
           }}
           fullWidth
-          placeholder={t('Send a message')}
+          placeholder={t('Start a discussion')}
           variant='outlined'
         />
       </form>

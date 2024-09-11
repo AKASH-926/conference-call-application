@@ -35,7 +35,7 @@ function MessageButton({ footer, ...props }) {
       }}
       style={{height: '100%',width:'100%'}}
     >
-      <Tooltip title={t('Chat with everyone')} placement="top">
+      <Tooltip title={t('Discussions')} placement="top">
         {/* <CustomizedBtn
           onClick={() => {
             if (!conference?.messageDrawerOpen) {
