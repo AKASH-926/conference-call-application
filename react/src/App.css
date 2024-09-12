@@ -86,8 +86,8 @@ form {
 
 .single-video-card .talking-indicator-light {
   position: absolute;
-  top: 2%;
-  left: 1%;
+  top: 1.5%;
+  left: 3%;
   border-radius: 50%;
   z-index: 10;
   -webkit-border-radius: 50%;

@@ -418,7 +418,7 @@ function WaitingRoom(props) {
                 borderRadius: '8px',
               }}
             >
-              <VideoCard trackAssignment={tempVTA} autoPlay muted hidePin={true} />
+              <VideoCard trackAssignment={tempVTA} autoPlay muted hidePin={true} hideRecording={true} hideFullScreen={true}/>
 
               <Grid
                 container

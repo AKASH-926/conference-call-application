@@ -7,7 +7,7 @@ import { SvgIcon } from "../SvgIcon";
 import { useTranslation } from "react-i18next";
 import { isMobile, isTablet } from 'react-device-detect';
 import { SvgComponent } from "learnystIcons";
-import { getSchoolDetails } from "LearnystUtils/commonUtils";
+import { getSchoolDetails, getSessionConfigData, safeParseJSON } from "LearnystUtils/commonUtils";
 import { useSnackbar } from "notistack";
 
 const CustomizedVideo = styled("video")({
@@ -30,6 +30,7 @@ function VideoCard(props) {
   const schoolData = getSchoolDetails();
   const { userName } = schoolData;
   const { enqueueSnackbar } = useSnackbar();
+  const sessionConfigData = safeParseJSON(getSessionConfigData())
 
   const cardBtnStyle = {
     display: "flex",
@@ -458,19 +459,33 @@ function VideoCard(props) {
         // direction="row-reverse"
         sx={{
           position: "absolute",
-          top: 0,
+          top: 10,
           // left: 0,
-          right: 0,
-          p: { xs: 1, md: 2 },
+          right: -4,
           zIndex: 9,
+          alignItems: 'center'
         }}
       >
+        {!props?.hideFullScreen && 
+        <Tooltip title={conference.isFullScreen ? t("Exit Full screen") : t("Enter Full screen")} placement="top">
+        <Grid item>
+          <CustomizedBox
+            id={"full-screen-"+props.trackAssignment.streamId}
+            sx={{...cardBtnStyle, cursor: "pointer", background : conference.isFullScreen ?  "#fff" : alpha(theme.palette.gray[90], 0.3) , width: '32px', height: '32px'}}
+            onClick={()=>handleFullScreenAction()}
+            >
+            <SvgComponent name="resolution" width="18px" height="18px" fill= {conference.isFullScreen ?  "#1a73e8" : "#fff"} />
+          </CustomizedBox>
+        </Grid>
+        </Tooltip>
+        }
         {micMuted && (
           <Tooltip title={t("mic is muted")} placement="top">
             <Grid item>
               <CustomizedBox
                 id={"mic-muted-"+props.trackAssignment.streamId}
-                sx={cardBtnStyle}>
+                sx={{...cardBtnStyle, width: '32px', height: '32px'}}
+                >
                 {/* <SvgIcon size={32} name={"muted-microphone"} color="#fff" /> */}
                 <SvgComponent name="mutedMicrophone" width="18px" height="18px" fill="#fff" />
               </CustomizedBox>
@@ -505,23 +520,18 @@ function VideoCard(props) {
         direction="row-reverse"
         sx={{
           position: "absolute",
-          top: 0,
-          left: 0,
-          p: { xs: 1, md: 2 },
+          top: 10,
+          left: -20,
           zIndex: 9,
         }}
       >
-          <Tooltip title={conference.isFullScreen ? t("Exit Full screen") : t("Enter Full screen")} placement="top">
+       {sessionConfigData?.isRecordingEnabled && !props?.hideRecording && (
+          <Tooltip title={t("Recording")} placement="top">
             <Grid item>
-              <CustomizedBox
-                id={"full-screen-"+props.trackAssignment.streamId}
-                sx={{...cardBtnStyle, cursor: "pointer", background : conference.isFullScreen ?  "#fff" : alpha(theme.palette.gray[90], 0.3) , width: '40px', height: '40px'}}
-                onClick={()=>handleFullScreenAction()}
-                >
-                <SvgComponent name="resolution" width="20px" height="20px" fill= {conference.isFullScreen ?  "#1a73e8" : "#fff"} />
-              </CustomizedBox>
+                <SvgComponent name="recording"/>
             </Grid>
           </Tooltip>
+        )}
       </Grid>
     );
   }
@@ -574,7 +584,7 @@ function VideoCard(props) {
         <Tooltip title={t('Host is talking')} placement='top'>
           <Grid item>
             <CustomizedBox id={'host-talking' + props.trackAssignment.streamId} sx={cardBtnStyle}>
-              <SvgComponent name='soundOn' width='28px' height='28px' fill={'#ffff'} />
+              <SvgComponent name='soundOn' width='24px' height='24px' fill={'#ffff'} />
             </CustomizedBox>
           </Grid>
         </Tooltip>
