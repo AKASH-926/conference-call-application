@@ -61,6 +61,15 @@ const MeetingRoom = React.memo((props) => {
   //   };
   // }, []);
 
+  React.useEffect(() => {
+    if (isMobile || isTablet) {
+      document?.documentElement?.requestFullscreen().then((r) => {
+        console.log('Fullscreen is requested', r);
+      });
+    }
+  }, []);
+
+
   function sendEmoji(emoji) {
     // conference?.sendReactions(emoji);
     sendLearnystEmoji(emoji);
@@ -210,8 +219,8 @@ const MeetingRoom = React.memo((props) => {
         style={{
           opacity: !conference.isFullScreen ? 1 : 0,
           transition: "opacity 0.5s ease-in-out",
-          zIndex: !conference.isFullScreen  ? theme.zIndex.drawer + 1 : theme.zIndex.drawer - 1,
-          zIndex: theme.zIndex.drawer + 1 
+          // zIndex: !conference.isFullScreen  ? theme.zIndex.drawer + 1 : theme.zIndex.drawer - 1,
+          zIndex: theme.zIndex.drawer + 1 ,
         }}
       >
         <Footer {...props} />
