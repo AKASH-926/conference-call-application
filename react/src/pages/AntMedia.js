@@ -2173,8 +2173,8 @@ function AntMedia(props) {
 		else if (videoMode == "screenwithcamera") {
 			webRTCAdaptor.switchDesktopCaptureWithCamera(publishStreamId);
             webRTCAdaptor.mediaManager.camera_location = cameraPosition;
-            webRTCAdaptor.mediaManager.camera_percent = 13;
-            webRTCAdaptor.mediaManager.camera_margin = 5;
+            webRTCAdaptor.mediaManager.camera_percent = 18;
+            webRTCAdaptor.mediaManager.camera_margin = 3;
 		}
         setIsScreenShared(true)
         setCameraButtonDisabled(true)

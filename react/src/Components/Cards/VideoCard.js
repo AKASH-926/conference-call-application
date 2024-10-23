@@ -118,6 +118,8 @@ function VideoCard(props) {
 
   const [isTalking, setIsTalking] = React.useState(false);
 
+  const [isBrowserFullScreen, setIsBrowserFullScreen] = React.useState(false);
+
   const timeoutRef = React.useRef(null);
 
   const mirrorView = props?.trackAssignment.isMine;
@@ -158,6 +160,15 @@ function VideoCard(props) {
         window.removeEventListener('keydown', handleKeyDown);
       };
     },[]);
+
+    useEffect(() => {
+      if (isMobile || isTablet) {
+        setIsBrowserFullScreen(true)
+        document?.documentElement?.requestFullscreen().then((r) => {
+          console.log('Fullscreen is requested', r);
+        });
+      }
+    }, []);
 
     const overlayButtonsGroup = () => {
         if (process.env.REACT_APP_VIDEO_OVERLAY_ADMIN_MODE_ENABLED === "true") {
@@ -463,18 +474,19 @@ function VideoCard(props) {
           // left: 0,
           right: -4,
           zIndex: 9,
-          alignItems: 'center'
+          alignItems: 'center',
+          gap: 0
         }}
       >
         {!props?.hideFullScreen && 
-        <Tooltip title={conference.isFullScreen ? t("Exit Full screen") : t("Enter Full screen")} placement="top">
+        <Tooltip title={conference.isFullScreen || isBrowserFullScreen? t("Exit Full screen") : t("Enter Full screen")} placement="top">
         <Grid item>
           <CustomizedBox
             id={"full-screen-"+props.trackAssignment.streamId}
-            sx={{...cardBtnStyle, cursor: "pointer", background : conference.isFullScreen ?  "#fff" : alpha(theme.palette.gray[90], 0.3) , width: '32px', height: '32px'}}
+            sx={{...cardBtnStyle, cursor: "pointer", background : conference.isFullScreen || isBrowserFullScreen ?  "#fff" : alpha(theme.palette.gray[90], 0.3) , width: '32px', height: '32px'}}
             onClick={()=>handleFullScreenAction()}
             >
-            <SvgComponent name="resolution" width="18px" height="18px" fill= {conference.isFullScreen ?  "#1a73e8" : "#fff"} />
+            <SvgComponent name="resolution" width="18px" height="18px" fill= {conference.isFullScreen || isBrowserFullScreen ?  "#1a73e8" : "#fff"} />
           </CustomizedBox>
         </Grid>
         </Tooltip>
@@ -491,6 +503,27 @@ function VideoCard(props) {
               </CustomizedBox>
             </Grid>
           </Tooltip>
+        )}
+        {!micMuted && conference.isPlayOnly && (
+          <div
+            style={{
+              borderColor: theme.palette.themeColor[90],
+              ...(isTalking || conference.talkers.includes(props.trackAssignment.streamId)
+                ? {}
+                : { display: 'none' }),
+            }}
+          >
+            <Tooltip title={t('Host is talking')} placement='top'>
+              <Grid item>
+                <CustomizedBox
+                  id={'host-talking' + props.trackAssignment.streamId}
+                  sx={{...cardBtnStyle, width: '32px', height: '32px', marginLeft: 1}}
+                >
+                  <SvgComponent name='soundOn' width='24px' height='24px' fill={'#ffff'} />
+                </CustomizedBox>
+              </Grid>
+            </Tooltip>
+          </div>
         )}
         {/* <Grid item>
           <Box sx={cardBtnStyle}>
@@ -522,7 +555,7 @@ function VideoCard(props) {
           position: "absolute",
           top: 10,
           left: -20,
-          zIndex: 9,
+          zIndex: 0,
         }}
       >
        {sessionConfigData?.isRecordingEnabled && !props?.hideRecording && (
@@ -600,21 +633,26 @@ function VideoCard(props) {
   };
 
   const handleFullScreenAction = () => {
-    // if (!document.fullscreenElement) {
-    //   document.documentElement
-    //     .requestFullscreen()
-    //     .then((r) => console.log('Fullscreen is requested', r));
-    // } else {
-    //   document.exitFullscreen().then((r) => console.log('Fullscreen is exited', r));
-    // }
-    conference.setIsFullScreen(!conference.isFullScreen)
-    if(!conference.isFullScreen) {
-      enqueueSnackbar({
-        message:   t('Press `Esc` or `FullScreen Button` to exit fullscreen.') ,
-        variant: 'info',
-      }, {
-        autoHideDuration: 800,
+  if((isMobile) || (isTablet)) {
+    if (!document?.fullscreenElement) {
+      document?.documentElement?.requestFullscreen().then((r) => {
+        console.log('Fullscreen is requested', r);
+        setIsBrowserFullScreen(true);
       });
+    } else {
+      document?.exitFullscreen().then((r) => {console.log('Fullscreen is exited', r);setIsBrowserFullScreen(false);});
+    }
+  }
+
+    if((!isMobile) && (!isTablet)) {
+      conference.setIsFullScreen(!conference.isFullScreen)
+      if(!conference.isFullScreen) {
+        enqueueSnackbar({
+          message:   t('Double tap on screen` or press `FullScreen Button` to exit fullscreen.') ,
+          variant: 'info',
+          autoHideDuration: 2000,
+        });
+      }
     }
   }
 
@@ -646,7 +684,7 @@ function VideoCard(props) {
 
           {overlayUtilityButton()}
 
-          {isTalkingFrame()}
+          {/* {isTalkingFrame()} */}
 
           {overlayVideoTitle()}
 
