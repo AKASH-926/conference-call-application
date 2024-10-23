@@ -18,6 +18,9 @@ function calculateLayout(
     height: 0,
   };
   // brute-force search layout where video occupy the largest area of the container
+  if(videoCount == 2) {
+    return {width : containerWidth, height: containerHeight}  // learnyst changes
+  }
   for (let cols = 1; cols <= videoCount; cols++) {
     const rows = Math.ceil(videoCount / cols);
     const hScale = containerWidth / (cols * aspectRatio);
@@ -142,7 +145,7 @@ function LayoutTiled(props) {
 
   return (
       <>
-        {conference?.videoTrackAssignments.length === 0 ? <p>There is no active publisher right now.</p> : null}
+        {conference?.videoTrackAssignments.length === 0 ? <p>There is no active host at the moment. Please wait, the host will join soon.</p> : null}
         {videoCards()}
         {process.env.REACT_APP_LAYOUT_OTHERS_CARD_VISIBILITY === 'true' ? othersCard() : null}
       </>

@@ -6,6 +6,7 @@ import { Tooltip } from '@mui/material';
 import { useSnackbar } from 'notistack';
 import { styled } from '@mui/material/styles';
 import { useTranslation } from 'react-i18next';
+import { SvgComponent } from 'learnystIcons';
 
 export const roundStyle = {
   width: { xs: 36, md: 46 },
@@ -44,7 +45,7 @@ function MicButton(props) {
       enqueueSnackbar({
         message: t('You need to allow camera and microphone permissions before muting yourself'),
         variant: 'info',
-        icon: <SvgIcon size={24} name={'muted-microphone'} color="#fff" />
+        icon: <SvgIcon size={24} name={'muted-microphone'} color="#000000" />
       }, {
         autoHideDuration: 1500,
       });
@@ -53,7 +54,8 @@ function MicButton(props) {
     enqueueSnackbar({
       message: t('Microphone off'),
       variant: 'info',
-      icon: <SvgIcon size={24} name={'muted-microphone'} color="#fff" />
+      // icon: <SvgIcon size={24} name={'muted-microphone'} color="#000000" />
+      icon: <SvgComponent name="mutedMicrophone" width="14px" height="18px" fill="#fff"/>
     }, {
       autoHideDuration: 1500,
     });
@@ -65,7 +67,8 @@ function MicButton(props) {
     enqueueSnackbar({
       message: t('Microphone on'),
       variant: 'info',
-      icon: <SvgIcon size={24} name={'microphone'} color="#fff" />
+      // icon: <SvgIcon size={24} name={'microphone'} color="#000000" />
+      icon: <SvgComponent name="microphone" width="10px" height="10px"/>
     }, {
       autoHideDuration: 1500,
     });
@@ -79,8 +82,9 @@ function MicButton(props) {
           <CustomizedBtn
             id="mic-button"
             disabled={conference?.microphoneButtonDisabled}
-            className={footer ? 'footer-icon-button' : ''} variant="contained" sx={rounded ? roundStyle : {}} color="error" onClick={(e) => { handleUnmute(e) }}>
-            <SvgIcon size={40} name={'muted-microphone'} color="#fff" />
+            className={footer ? 'footer-icon-button' : ''} variant='contained' sx={rounded ? roundStyle : {}} color="error" onClick={(e) => { handleUnmute(e) }}>
+            {/* <SvgIcon size={40} name={'muted-microphone'} color="#ffff" /> */}
+            <SvgComponent name="mutedMicrophone" width="18px" height="18px" fill="#fff"/>
           </CustomizedBtn>
         </Tooltip>
       ) : (
@@ -88,8 +92,9 @@ function MicButton(props) {
           <CustomizedBtn
             id="mic-button"
             disabled={conference?.microphoneButtonDisabled}
-            className={footer ? 'footer-icon-button' : ''} variant="contained" color="primary" sx={rounded ? roundStyle : {}} onClick={(e) => { handleMute(e) }}>
-            <SvgIcon size={40} name={'microphone'} color='inherit' />
+            className={footer ? 'footer-icon-button' : ''} variant="outlined" color="inherit" sx={rounded ? {...roundStyle }: {"&.footer-icon-button" : {background: 'rgb(0,0,0)'}}} onClick={(e) => { handleMute(e) }}>
+            {/* <SvgIcon size={40} name={'microphone'} color='inherit' /> */}
+            <SvgComponent name="microphone" width="14px" height="16px" fill="#fff"/>
           </CustomizedBtn>
         </Tooltip>
       )}

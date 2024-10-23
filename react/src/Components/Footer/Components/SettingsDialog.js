@@ -12,6 +12,8 @@ import { Grid, Hidden, MenuItem, useMediaQuery } from '@mui/material';
 import { SvgIcon } from 'Components/SvgIcon';
 import { useTheme } from '@mui/material';
 import { useTranslation } from 'react-i18next';
+import { SvgComponent } from 'learnystIcons';
+import { DialogBox } from 'Components/LearnystComponents/DialogBox';
 
 const AntDialogTitle = props => {
   const { children, onClose, ...other } = props;
@@ -29,7 +31,8 @@ const AntDialogTitle = props => {
             top: 27,
           }}
         >
-          <SvgIcon size={30} name={'close'} color={'white'} />
+          {/* <SvgIcon size={30} name={'close'} color={'black'} /> */}
+          <SvgComponent name="close" width="18px" height="18px" fill='black'/>
         </Button>
       ) : null}
     </DialogTitle>
@@ -40,7 +43,8 @@ export default function SettingsDialog(props) {
   const { t } = useTranslation();
   const { onClose, selectedValue, open, selectFocus } = props;
   const conference = React.useContext(ConferenceContext);
-
+  const [showDialog, setShowDialog] = React.useState(false);
+  const [selectedVideoResolution, setSelectedVideoResolution] = React.useState(false);
   const theme = useTheme();
   const fullScreen = useMediaQuery(theme.breakpoints.down('xs'));
 
@@ -67,13 +71,14 @@ export default function SettingsDialog(props) {
   }, [conference.devices]);
 
   return (
+    <>
     <Dialog onClose={handleClose} open={open} fullScreen={fullScreen} maxWidth={'sm'}>
       <AntDialogTitle onClose={handleClose}>{t('Set Camera and Microphone')}</AntDialogTitle>
       <DialogContent>
         <Box component="form" sx={{ display: 'flex', flexWrap: 'wrap' }}>
           <Grid container>
             <Grid container>
-              <InputLabel>{t('Camera')}</InputLabel>
+              <InputLabel sx={{color: 'black'}}>{t('Camera')}</InputLabel>
             </Grid>
             <Grid container alignItems={'center'} spacing={2}>
               <Grid item xs={10}>
@@ -84,7 +89,7 @@ export default function SettingsDialog(props) {
                   variant="outlined"
                   value={conference.selectedCamera}
                   onChange={e => switchVideoMode(e.target.value)}
-                  sx={{ color: 'white' }}
+                  sx={{ color: 'black' }}
                 >
                   {conference.devices && conference.devices?.length > 0 && conference.devices
                     .filter(device => device.kind === 'videoinput')
@@ -97,46 +102,48 @@ export default function SettingsDialog(props) {
               </Grid>
               <Hidden xsDown>
                 <Grid item>
-                  <SvgIcon size={30} name={'camera'} color={'white'} />
+                  {/* <SvgIcon size={30} name={'camera'} color={'black'} /> */}
+                  <SvgComponent name="camera" width="18px" height="18px" fill='black'/>
                 </Grid>
               </Hidden>
             </Grid>
           </Grid>
           <Grid container sx={{ mt: 4 }}>
             <Grid container>
-              <InputLabel>{t('Video Send resolution (maximum)')}</InputLabel>
+              <InputLabel sx={{color: 'black'}}>{t('Video Send resolution (maximum)')}</InputLabel>
             </Grid>
             <Grid container alignItems={'center'} spacing={2}>
               <Grid item xs={10}>
-                <Select variant="outlined" fullWidth value={conference.videoSendResolution} onChange={e => conference.setVideoSendResolution(e.target.value)} sx={{ color: 'white' }}>
+                <Select variant="outlined" disabled={props?.isVideoResolutionDisabled} fullWidth value={localStorage.getItem("videoSendResolution") || 'standardDefinition'} onChange={e => {conference.setVideoSendResolution(e.target.value);setSelectedVideoResolution(e.target.value);setShowDialog(true); onClose(true)}} sx={{ color: 'black' }}>
                   <MenuItem key="auto" value="auto">
                     {t('Auto')}
                   </MenuItem>
                   <MenuItem key="high-definition" value="highDefinition">
-                    {t('High definition (720p)')}
+                    {t('High definition')}
                   </MenuItem>
                   <MenuItem key="standart-definition" value="standardDefinition">
-                    {t('Standard definition (360p)')}
+                    {t('Standard definition')}
                   </MenuItem>
                   <MenuItem key="low-definition" value="lowDefinition">
-                    {t('Low definition (180p)')}
+                    {t('Low definition')}
                   </MenuItem>
                 </Select>
               </Grid>
               <Hidden xsDown>
                 <Grid item>
-                  <SvgIcon size={36} name={'resolution'} color={'white'} />
+                  {/* <SvgIcon size={36} name={'resolution'} color={'black'} /> */}
+                  <SvgComponent name="resolution" width="18px" height="18px" fill='black'/>
                 </Grid>
               </Hidden>
             </Grid>
           </Grid>
           <Grid container sx={{ mt: 4 }}>
             <Grid container>
-              <InputLabel>{t('Microphone')}</InputLabel>
+              <InputLabel sx={{color: 'black'}}>{t('Microphone')}</InputLabel>
             </Grid>
             <Grid container alignItems={'center'} spacing={2}>
               <Grid item xs={10}>
-                <Select autoFocus={selectFocus === 'audio'} variant="outlined" fullWidth value={conference.selectedMicrophone} onChange={e => switchAudioMode(e.target.value)} sx={{ color: 'white' }}>
+                <Select autoFocus={selectFocus === 'audio'} variant="outlined" fullWidth value={conference.selectedMicrophone} onChange={e => switchAudioMode(e.target.value)} sx={{ color: 'black' }}>
                   {conference.devices && conference.devices?.length > 0 && conference.devices
                     .filter(device => device.kind === 'audioinput')
                     .map(device => (
@@ -148,7 +155,8 @@ export default function SettingsDialog(props) {
               </Grid>
               <Hidden xsDown>
                 <Grid item>
-                  <SvgIcon size={36} name={'microphone'} color={'white'} />
+                  {/* <SvgIcon size={36} name={'microphone'} color={'black'} /> */}
+                  <SvgComponent name="microphone" width="14px" height="14px" fill='black'/>
                 </Grid>
               </Hidden>
             </Grid>
@@ -156,6 +164,20 @@ export default function SettingsDialog(props) {
         </Box>
       </DialogContent>
     </Dialog>
+    
+    <DialogBox
+        open={showDialog}
+        onClose={() => setShowDialog(false)}
+        primaryAction={() => {
+          conference.setVideoQualityConstraints(selectedVideoResolution)
+          window.location.reload()
+        }}
+        closeButtonText={'Cancel'}
+        primaryActionText={'Reload'}
+        dialogDescription={"Changes will take effect after you reload the page"}
+      />
+    </>
+
   );
 }
 

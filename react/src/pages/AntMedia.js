@@ -1,16 +1,16 @@
 import React, {useEffect, useState} from "react";
 import {Box, CircularProgress, Grid, Backdrop, Typography} from "@mui/material";
 import {useBeforeUnload, useParams} from "react-router-dom";
-import WaitingRoom from "./WaitingRoom";
+// import WaitingRoom from "./WaitingRoom";
 import _ from "lodash";
 import MeetingRoom from "./MeetingRoom";
-import MessageDrawer from "Components/MessageDrawer";
+// import MessageDrawer from "Components/MessageDrawer";
 import {useSnackbar} from "notistack";
 import LeftTheRoom from "./LeftTheRoom";
-import {getUrlParameter, VideoEffect, WebRTCAdaptor} from "@antmedia/webrtc_adaptor";
+// import {getUrlParameter, VideoEffect, WebRTCAdaptor} from "@antmedia/webrtc_adaptor";
 import {SvgIcon} from "../Components/SvgIcon";
-import ParticipantListDrawer from "../Components/ParticipantListDrawer";
-import EffectsDrawer from "../Components/EffectsDrawer";
+// import ParticipantListDrawer from "../Components/ParticipantListDrawer";
+// import EffectsDrawer from "../Components/EffectsDrawer";
 import {useTranslation} from "react-i18next";
 
 import {getRoomNameAttribute, getWebSocketURLAttribute, isComponentMode} from "../utils";
@@ -18,6 +18,15 @@ import floating from "../external/floating.js";
 import {UnauthrorizedDialog} from "Components/Footer/Components/UnauthorizedDialog";
 import {useWebSocket} from 'Components/WebSocketProvider';
 import {useTheme} from "@mui/material/styles";
+
+/* Learnyst custom components */ 
+import MessageDrawer from "../Components/LearnystComponents/MessageDrawer";
+import { connectSocket, disconnectSocket, leaveLearnystRoom, subscribeToEvent, unsubscribeFromEvent } from "LearnystUtils/socketUtils";
+import ParticipantListDrawer from "../Components/LearnystComponents/ParticipantListDrawer";
+import {  LEARNYST_SOCKET_NOTIFICATIONS, MESSAGE_TYPE } from "learnystConstants";
+import WaitingRoom from "./LearnystWaitingRoom";
+import {getUrlParameter, VideoEffect, WebRTCAdaptor} from "@sridhardvvce/webrtc_adaptor";
+import {  getSessionConfigData, safeParseJSON } from "LearnystUtils/commonUtils";
 
 export const ConferenceContext = React.createContext(null);
 
@@ -93,11 +102,21 @@ function getPublishToken() {
     return (dataPublishToken) ? dataPublishToken : getUrlParameter("publishToken");
 }
 
+function getIsPlayOnly() {
+    const dataIsPlayOnly = document.getElementById("root")?.getAttribute("data-is-play-only");
+    return (dataIsPlayOnly) ? dataIsPlayOnly : getUrlParameter("playOnly");
+}
+
+function getToken() {
+    const dataToken = document.getElementById("root")?.getAttribute("data-token");
+    return (dataToken) ? dataToken : getUrlParameter("token");
+}
+
 var playToken = getPlayToken();
 var publishToken = getPublishToken();
-var token = getUrlParameter("token")
+var token = getToken()
 var InitialStreamId = getUrlParameter("streamId");
-var playOnly = getUrlParameter("playOnly");
+var playOnly = getIsPlayOnly()
 var enterDirectly = getUrlParameter("enterDirectly");
 if (enterDirectly == null || typeof enterDirectly === "undefined") {
     enterDirectly = false;
@@ -109,12 +128,17 @@ var scroll_down = true;
 var last_warning_time = null;
 
 var videoQualityConstraints = {
+  ...(safeParseJSON(localStorage.getItem('videoQualityConstraints')) ?? {
     video: {
-        width: {ideal: 640},
-        height: {ideal: 360},
-        advanced: [{frameRate: {min: 15}}, {height: {min: 360}}, {width: {min: 640}}, {frameRate: {max: 15}}, {width: {max: 640}}, {height: {max: 360}}, {aspectRatio: {exact: 1.77778}}]
+      width: { ideal: 640 },
+      height: { ideal: 360 }, //  360p 
+      frameRate: { max: 15 }, // Optionally increase the frame rate to 30 fps for better quality
+      aspectRatio: { ideal: 1.77778 }, // 16:9 aspect ratio
     },
-}
+  }),
+};
+
+
 
 var audioQualityConstraints = {
     audio: {
@@ -307,7 +331,8 @@ function AntMedia(props) {
 
     // video send resolution for publishing
     // possible values: "auto", "highDefinition", "standartDefinition", "lowDefinition"
-    const [videoSendResolution, setVideoSendResolution] = React.useState(localStorage.getItem("videoSendResolution") ? localStorage.getItem("videoSendResolution") : "auto");
+    // const [videoSendResolution, setVideoSendResolution] = React.useState(localStorage.getItem("videoSendResolution") ? localStorage.getItem("videoSendResolution") : "auto");
+    const [videoSendResolution, setVideoSendResolution] = React.useState(localStorage.getItem("videoSendResolution") ? localStorage.getItem("videoSendResolution") : "standardDefinition");
 
     const [messages, setMessages] = React.useState([]);
 
@@ -661,7 +686,8 @@ function AntMedia(props) {
         globals.maxVideoTrackCount = 6; //FIXME
         setPublishStreamId(generatedStreamId);
 
-        token = getUrlParameter("token") || publishToken; // can be used for both publish and play. at the moment only used on room creation password scenario
+        // token = getUrlParameter("token") || publishToken; // can be used for both publish and play. at the moment only used on room creation password scenario
+        token = getToken() || publishToken; // can be used for both publish and play. at the moment only used on room creation password scenario
 
         if (!playOnly && token === undefined) {
             token = publishToken;
@@ -819,6 +845,64 @@ function AntMedia(props) {
         setParticipantUpdated(!participantUpdated);
     }
 
+    const learnystSocketRef = React.useRef(null);
+    const [learnystChatNotification, setLearnystChatNotification] = React.useState([])
+    const [learnystParticipantList, setLearnystParticipantList] = React.useState([ ]);
+    const [learnystEmojiReaction, setLearnystEmojiReaction] = React.useState({emoji: '', userName: ''})
+    const learnystSocketHeartBeatRef = React.useRef(null);
+    const [isFullScreen, setIsFullScreen] = useState(false)
+    const [isDrawerScreenPopout, setIsDrawerScreenPopout] = useState(false)
+    const sessionConfigData = safeParseJSON(getSessionConfigData())
+
+    useEffect(() => {
+        if (!learnystSocketRef.current) {
+          learnystSocketRef.current = connectSocket();
+        }
+        const handleReceiveNotifcation = (data) => {
+            let userName = data?.user_data?.user_name
+            if(data.notification === LEARNYST_SOCKET_NOTIFICATIONS.NEW_MESSAGE) {
+                let messageData = data?.notification_data?.msg
+                if(messageData.type === MESSAGE_TYPE.TEXT) { //text
+                    setLearnystChatNotification(prevNotification => [...prevNotification,data])
+                }
+                if(messageData.type === MESSAGE_TYPE.EMOJI) { //reactions
+                    setLearnystEmojiReaction(prevState => ({
+                        ...prevState,
+                        userName: userName,
+                        emoji: messageData?.text,
+                      }));
+                }   
+            }
+            setLearnystParticipantList((prevList) => {
+                if (data.notification === LEARNYST_SOCKET_NOTIFICATIONS.USER_JOINED) {
+                  const userExists = prevList.some(
+                    (user) => user?.user_id === data?.user_data?.user_id
+                  );
+                  if (!userExists) {
+                    return [...prevList, data.user_data];
+                  }
+                }
+                if (
+                  data.notification === LEARNYST_SOCKET_NOTIFICATIONS.USER_LEFT ||
+                  data.notification === LEARNYST_SOCKET_NOTIFICATIONS.USER_DISCONNECTED
+                ) {
+                  return prevList.filter((user) => user?.user_id !== data?.user_data?.user_id);
+                }
+                return prevList;
+            });
+        }
+        subscribeToEvent('notification', handleReceiveNotifcation);
+        return () => {
+            console.log("Cleanup function triggered");
+
+            unsubscribeFromEvent('notification', handleReceiveNotifcation)
+            // leaveLearnystRoom();
+            // disconnectSocket();
+        };
+    },[])
+
+
+    
     useEffect(() => {
         async function createWebRTCAdaptor() {
             console.log("++ createWebRTCAdaptor");
@@ -839,7 +923,7 @@ function AntMedia(props) {
 
                 setRecreateAdaptor(false);
             }
-        }
+        } 
 
         createWebRTCAdaptor();
     }, [recreateAdaptor]);  // eslint-disable-line react-hooks/exhaustive-deps
@@ -904,7 +988,7 @@ function AntMedia(props) {
 
     function startScreenSharing() {
 
-        var token = getUrlParameter("token") || publishToken; // can be used for both publish and play. at the moment only used on room creation password scenario
+        var token = getToken() || publishToken; // can be used for both publish and play. at the moment only used on room creation password scenario
 
         if (token === undefined) {
             token = publishToken;
@@ -1004,15 +1088,18 @@ function AntMedia(props) {
 
             if (reconnecting) {
                 playReconnected = true;
-                reconnecting = !(publishReconnected && playReconnected);
+                // reconnecting = !(publishReconnected && playReconnected);
+                reconnecting = !playReconnected // by learnyst
                 setIsReconnectionInProgress(reconnecting);
             }
         } else if (info === "play_finished") {
             clearInterval(requestVideoTrackAssignmentsInterval);
             videoTrackAssignmentsIntervalJob = null;
         } else if (info === "screen_share_stopped") {
-
+            stopScreenShare() // to handle button status
         } else if (info === "screen_share_started") {
+            setIsScreenShared(true)
+            setCameraButtonDisabled(true)  // to handle button status
 
         } else if (info === "data_received") {
             try {
@@ -1141,6 +1228,7 @@ function AntMedia(props) {
             errorMessage = "There was a error during data channel communication";
         } else if (error.indexOf("ScreenSharePermissionDenied") !== -1) {
             errorMessage = "You are not allowed to access screen share";
+            stopScreenShare() // handle button status
         } else if (error.indexOf("WebSocketNotConnected") !== -1) {
             errorMessage = "WebSocket Connection is disconnected.";
         } else if (error.indexOf("already_publishing") !== -1) {
@@ -1673,7 +1761,6 @@ function AntMedia(props) {
     function updateVideoSendResolution(isPinned) {
         let promise = null;
         let mediaConstraints = {video: true};
-
         if (isScreenShared) {
             mediaConstraints = getMediaConstraints("screenConstraints", 20);
             promise = webRTCAdaptor?.applyConstraints(mediaConstraints);
@@ -1702,7 +1789,7 @@ function AntMedia(props) {
                 let videoTrackSettings = webRTCAdaptor?.mediaManager?.localStream?.getVideoTracks()[0]?.getSettings();
                 console.info("Video track resolution: ", videoTrackSettings?.width, "x", videoTrackSettings?.height, " frame rate: ", videoTrackSettings?.frameRate);
             }).catch(err => {
-                setVideoSendResolution("auto");
+                setVideoSendResolution("standardDefinition");
                 console.error("Camera resolution is not updated to " + videoSendResolution + " mode. Error is " + err);
                 console.info("Trying to update camera resolution to auto");
             });
@@ -1985,6 +2072,115 @@ function AntMedia(props) {
         }
     }
 
+    function learnystShowReactions (userName, reactionRequest) {
+        let reaction = reactions[reactionRequest] || '😀';
+        let streamName = userName;
+
+        floating({
+            content: '<div>' + reaction + '<br><span style="background-color: darkgray;color: white;padding: 1px 2px;text-align: center;border-radius: 5px;font-size: 0.675em;">' + streamName + '</span></div>',
+            number: 1,
+            duration: 5,
+            repeat: 1,
+            direction: 'normal',
+            size: 2
+        });
+    }
+
+    const setVideoQualityConstraints = (quality) => {
+      if (quality === 'auto') {
+        videoQualityConstraints = {
+          video: {
+            width: { ideal: 640 },
+            height: { ideal: 360 }, // 360p
+            frameRate: { max: 15 },
+            aspectRatio: { ideal: 1.77778 },
+          },
+        };
+      }
+      if (quality === 'highDefinition') {
+        videoQualityConstraints = {
+          video: {
+            width: { ideal: 1280 },
+            height: { ideal: 720 }, // 720p
+            frameRate: { max: 15 },
+            aspectRatio: { ideal: 1.77778 },
+          },
+        };
+      }
+      if (quality === 'standardDefinition') {
+        videoQualityConstraints = {
+          video: {
+            width: { ideal: 640 },
+            height: { ideal: 360 }, //  360p
+            frameRate: { max: 15 },
+            aspectRatio: { ideal: 1.77778 },
+          },
+        };
+      }
+      if (quality === 'lowDefinition') {
+        videoQualityConstraints = {
+          video: {
+            width: { ideal: 320 },
+            height: { ideal: 180 }, // 180p
+            frameRate: { max: 15 },
+            aspectRatio: { ideal: 1.77778 },
+          },
+        };
+      }
+      localStorage.setItem('videoQualityConstraints', JSON.stringify(videoQualityConstraints));
+      localStorage.setItem('videoSendResolution', quality);
+    };
+
+    function setBlackScreenProperties ({canvasWidth, canvasHeight, canvasTitle,canvasTitleFontSize, canvasCircleRadius }) {
+        webRTCAdaptor.mediaManager.dummyCanvasTitle = canvasTitle // displayed when no stream is present
+        webRTCAdaptor.mediaManager.dummyCanvasProperties = {
+            canvasWidth,
+            canvasHeight,
+            canvasTitleFontSize,
+            canvasCircleRadius
+        }
+    }
+
+
+     function stopScreenShare() { //  to stop compose screen share + camera
+        try {
+            if (isMyCamTurnedOff) {
+                checkAndTurnOffLocalCamera("localVideo");
+                checkAndTurnOffLocalCamera(publishStreamId)
+            } else {
+              // Update the state to indicate that screen sharing has stopped
+              if (localStorage.getItem('selectedCamera')) {
+                let deviceId = localStorage.getItem('selectedCamera');
+                webRTCAdaptor.switchVideoCameraCapture(publishStreamId, deviceId);
+              }
+            }
+            if (webRTCAdaptor.mediaManager.smallVideoTrack){
+                webRTCAdaptor.mediaManager.smallVideoTrack.stop(); // to stop camera feed overlay on screen share
+            }
+            setIsScreenShared(false);
+            setCameraButtonDisabled(false)
+        } catch (error) {
+            console.error("Error stopping screen share:", error);
+        }
+    }
+    
+
+    function switchVideoMode(videoMode, cameraPosition = "top-left") {
+        webRTCAdaptor.mediaManager.switchVideoCameraMediaConstraints = videoQualityConstraints['video']
+		if (videoMode == "screen") {
+			webRTCAdaptor.switchDesktopCapture(publishStreamId);
+		}
+		else if (videoMode == "screenwithcamera") {
+			webRTCAdaptor.switchDesktopCaptureWithCamera(publishStreamId);
+            webRTCAdaptor.mediaManager.camera_location = cameraPosition;
+            webRTCAdaptor.mediaManager.camera_percent = 18;
+            webRTCAdaptor.mediaManager.camera_margin = 3;
+		}
+        setIsScreenShared(true)
+        setCameraButtonDisabled(true)
+	}
+
+
     function localVideoCreate(tempLocalVideo) {
         // it can be null when we first open the page
         // due to the fact that local stream is not ready yet.
@@ -2060,6 +2256,7 @@ function AntMedia(props) {
     }
     window.makeFullScreen = makeFullScreen;
 
+
     return (!initialized ? <>
             <Grid
                 container
@@ -2069,10 +2266,17 @@ function AntMedia(props) {
                 justifyContent="center"
                 style={{minHeight: '100vh'}}
             >
-                <Grid item xs={3}>
-                    <Box sx={{display: 'flex'}}>
-                        <CircularProgress size="4rem"/>
-                    </Box>
+          <Grid item xs={3}>
+            <Grid container alignItems='center' justify='center' alignContent='center'>
+              <Grid item xs={12} align='center'>
+                <CircularProgress size='4rem' />
+              </Grid>
+              <Grid item xs={12} align='center'>
+                <Typography style={{ color: theme.palette.themeColor0 }}>
+                  <b>{t('Please wait. We are setting up the session for you...')}</b>
+                </Typography>
+              </Grid>
+            </Grid>
                 </Grid>
             </Grid>
         </> : <Grid container className="App">
@@ -2193,7 +2397,27 @@ function AntMedia(props) {
                         speedTestForPlayWebRtcAdaptorInfoCallback,
                         speedTestForPlayWebRtcAdaptorErrorCallback,
                         speedTestForPublishWebRtcAdaptorInfoCallback,
-                        speedTestForPublishWebRtcAdaptorErrorCallback
+                        speedTestForPublishWebRtcAdaptorErrorCallback,
+                        //-----------learnyst-------------
+                        roomName,
+                        learnystSocketRef,
+                        learnystChatNotification,
+                        setLearnystParticipantList,
+                        learnystParticipantList,
+                        learnystEmojiReaction,
+                        learnystShowReactions,
+                        switchVideoMode,
+                        stopScreenShare,
+                        setIsScreenShared,
+                        setBlackScreenProperties,
+                        learnystSocketHeartBeatRef,
+                        sessionConfigData,
+                        setIsFullScreen,
+                        isFullScreen,
+                        setVideoQualityConstraints,
+                        videoQualityConstraints,
+                        setIsDrawerScreenPopout,
+                        isDrawerScreenPopout
                     }}
                 >
                     {props.children}
@@ -2215,9 +2439,9 @@ function AntMedia(props) {
                                 </Grid>
                                 <Grid item xs={12} align='center'>
                                     {isNoSreamExist && isPlayOnly ? <Typography
-                                        style={{color: theme.palette.themeColor10}}><b>{t("The room is currently empty.")}</b><br></br><b>{t("You will automatically join the room once it is ready.")}</b>
+                                        style={{color: theme.palette.themeColor0}}><b>{t("The session is currently empty.")}</b><br></br><b>{t("You will automatically join the room once it is ready.")}</b>
                                     </Typography> : <Typography
-                                        style={{color: theme.palette.themeColor10}}><b>{t("Joining the room...")}</b></Typography>}
+                                        style={{color: theme.palette.themeColor0}}><b>{t("Joining the session...")}</b></Typography>}
                                 </Grid>
                             </Grid>
                         </Backdrop>) : null}
@@ -2260,7 +2484,7 @@ function AntMedia(props) {
                             <MeetingRoom/>
                             <MessageDrawer/>
                             <ParticipantListDrawer/>
-                            <EffectsDrawer/>
+                            {/* <EffectsDrawer/>  as for now virtual background not used*/} 
                         </>)}
                 </ConferenceContext.Provider>
             </Grid>

@@ -5,10 +5,12 @@ import { SvgIcon } from '../../SvgIcon';
 import { ConferenceContext } from 'pages/AntMedia';
 import { Tooltip, Badge } from '@mui/material';
 import { useTranslation } from 'react-i18next';
+import { SvgComponent } from 'learnystIcons';
 
 const CustomizedBtn = styled(Button)(({ theme }) => ({
   '&.footer-icon-button':{
     height: '100%',
+    background: theme.palette.themeColor[90],
     [theme.breakpoints.down('sm')]:{
       padding:8,
       minWidth: 'unset',
@@ -33,8 +35,8 @@ function MessageButton({ footer, ...props }) {
       }}
       style={{height: '100%',width:'100%'}}
     >
-      <Tooltip title={t('Chat with everyone')} placement="top">
-        <CustomizedBtn
+      <Tooltip title={t('Discussions')} placement="top">
+        {/* <CustomizedBtn
           onClick={() => {
             if (!conference?.messageDrawerOpen) {
               conference?.toggleSetNumberOfUnreadMessages(0);
@@ -46,6 +48,26 @@ function MessageButton({ footer, ...props }) {
           color={conference?.messageDrawerOpen ? 'primary' : 'secondary'}
         >
           <SvgIcon size={40} color={conference?.messageDrawerOpen ? 'black' : 'white'} name={'message-off'} />
+        </CustomizedBtn> */}
+        <CustomizedBtn
+          onClick={() => {
+            if (!conference?.messageDrawerOpen || !conference?.isDrawerScreenPopout) {
+              conference?.toggleSetNumberOfUnreadMessages(0);
+            } 
+            if (conference?.isDrawerScreenPopout) {
+              conference.setIsDrawerScreenPopout(false);
+              conference?.handleMessageDrawerOpen(false)
+              return
+            }
+            conference?.handleMessageDrawerOpen(!conference?.messageDrawerOpen);
+          }}
+          variant={conference?.messageDrawerOpen || conference?.isDrawerScreenPopout ? "contained" : "outlined"}
+          className={footer ? 'footer-icon-button' : ''}
+          color={conference?.messageDrawerOpen || conference?.isDrawerScreenPopout ? 'secondary' : 'inherit'}
+          sx={{border: '2px solid white', boxShadow: 'rgba(0, 0, 0, 0.24) 0px 3px 8px'}}
+          disabled={conference?.isDrawerScreenPopout && conference.participantListDrawerOpen}
+        >
+          <SvgComponent name={"message"} width="20px" height="14px" fill={conference?.messageDrawerOpen || conference?.isDrawerScreenPopout ? "#8ab4f8" : "#ffffff"}/>
         </CustomizedBtn>
       </Tooltip>
     </Badge>

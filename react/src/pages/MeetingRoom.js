@@ -11,6 +11,8 @@ import {useTheme} from "@mui/material/styles";
 import {t} from "i18next";
 import {isComponentMode} from "../utils";
 import { isMobile, isTablet } from "react-device-detect";
+import { LEARNYST_ROOM_TYPE, LEARNYST_SOCKET_COMMANDS, MESSAGE_TYPE } from "learnystConstants";
+import { handleSocketActions } from "LearnystUtils/socketUtils";
 
 
 function debounce(fn, ms) {
@@ -31,6 +33,10 @@ const MeetingRoom = React.memo((props) => {
 
   const theme = useTheme();
 
+  const [footerVisible, setFooterVisible] = React.useState(true);
+  const [isFooterFocused, setIsFooterFocused] = React.useState(false);
+  const footerBlurTimeout = React.useRef(null);
+
   React.useEffect(() => {
     handleGalleryResize(false);
     window.conference = conference;
@@ -38,7 +44,7 @@ const MeetingRoom = React.memo((props) => {
 
   React.useEffect(() => {
     handleGalleryResize(true);
-  }, [conference.messageDrawerOpen, conference.participantListDrawerOpen, conference.effectsDrawerOpen]);
+  }, [conference.messageDrawerOpen, conference.participantListDrawerOpen, conference.effectsDrawerOpen, conference.isDrawerScreenPopout]);
 
   React.useEffect(() => {
     const debouncedHandleResize = debounce(handleGalleryResize, 500);
@@ -48,11 +54,46 @@ const MeetingRoom = React.memo((props) => {
       window.removeEventListener("resize", debouncedHandleResize);
     };
   });
+  // React.useEffect(() => {
+  //   document.addEventListener("mousemove", handleMouseMove);
+  //   return () => {
+  //     document.removeEventListener("mousemove", handleMouseMove);
+  //   };
+  // }, []);
+
+  React.useEffect(() => {
+    if (isMobile || isTablet) {
+      document?.documentElement?.requestFullscreen().then((r) => {
+        console.log('Fullscreen is requested', r);
+      });
+    }
+  }, []);
+
 
   function sendEmoji(emoji) {
-    conference?.sendReactions(emoji);
+    // conference?.sendReactions(emoji);
+    sendLearnystEmoji(emoji);
     conference.setShowEmojis(!conference.showEmojis);
   }
+  React.useEffect(() => {
+    const emojiData = conference.learnystEmojiReaction || {}
+    if(emojiData?.emoji?.length) {
+      conference.learnystShowReactions(emojiData?.userName, emojiData?.emoji);
+    }
+}, [conference.learnystEmojiReaction]);
+
+  const sendLearnystEmoji = (emoji) => {
+    const actionData = {
+      command: LEARNYST_SOCKET_COMMANDS.SEND_MSG,
+      roomType: LEARNYST_ROOM_TYPE.LIVE_CLASS_CHAT,
+      message:  emoji,
+      messageType: MESSAGE_TYPE.EMOJI // for emoji
+    };
+    conference.learnystShowReactions("You", emoji)
+    handleSocketActions(actionData, (respone) => {
+      console.log('response', respone);
+    });
+  };
 
   const reactionList = [
     {label: t("Love It"), node: <div>💖</div>, key: "sparkling_heart"},
@@ -77,6 +118,9 @@ const MeetingRoom = React.memo((props) => {
         } else {
           gallery.classList.remove("drawer-open");
         }
+      }
+      if(conference.isDrawerScreenPopout && !conference.participantListDrawerOpen){
+        gallery.classList.remove("drawer-open");
       }
       const screenWidth = gallery.getBoundingClientRect().width;
       const screenHeight = gallery.getBoundingClientRect().height;
@@ -105,6 +149,27 @@ const MeetingRoom = React.memo((props) => {
 
   const pinLayout = (typeof firstPinnedParticipant !== "undefined") && !isMobile && !isTablet
 
+  function handleMouseMove() {
+    setFooterVisible(true); 
+    clearTimeout(footerBlurTimeout.current);
+    footerBlurTimeout.current = setTimeout(() => {
+      if (isFooterFocused === false) {
+        setFooterVisible(false);
+      }
+    }, 5000);
+  }
+
+  function handleFooterMouseEnter() {
+    setIsFooterFocused(true);
+    setFooterVisible(true);
+    clearTimeout(footerBlurTimeout.current);
+  }
+
+  function handleFooterMouseLeave() {
+    setIsFooterFocused(false);
+    handleMouseMove();
+  }
+
   return (
     <>
       <MuteParticipantDialog/>
@@ -117,7 +182,7 @@ const MeetingRoom = React.memo((props) => {
           style={{display: "none"}}
         />
       ))}
-      <div id="meeting-gallery" style={{height: "calc(100vh - 80px)"}}>
+      <div id="meeting-gallery" style={{height: conference.isFullScreen ? "100vh" : "calc(100vh - 60px)"}}>
         <>
           {pinLayout ?
             (<LayoutPinned
@@ -148,7 +213,19 @@ const MeetingRoom = React.memo((props) => {
                                style={{backgroundColor: theme.palette.themeColor[70]}} onSelect={sendEmoji}/>
         </div>)
       }
-      <Footer {...props} />
+      <div
+        // onMouseEnter={handleFooterMouseEnter}
+        // onMouseLeave={handleFooterMouseLeave}  // auto hide footer code
+        style={{
+          opacity: !conference.isFullScreen ? 1 : 0,
+          transition: "opacity 0.5s ease-in-out",
+          // zIndex: !conference.isFullScreen  ? theme.zIndex.drawer + 1 : theme.zIndex.drawer - 1,
+          zIndex: theme.zIndex.drawer + 1 ,
+        }}
+      >
+        <Footer {...props} />
+      </div>
+
     </>
   )
 });

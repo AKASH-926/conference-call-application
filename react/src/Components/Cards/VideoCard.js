@@ -6,6 +6,9 @@ import { Grid, Typography, useTheme, Box, Tooltip, Fab } from "@mui/material";
 import { SvgIcon } from "../SvgIcon";
 import { useTranslation } from "react-i18next";
 import { isMobile, isTablet } from 'react-device-detect';
+import { SvgComponent } from "learnystIcons";
+import { getSchoolDetails, getSessionConfigData, safeParseJSON } from "LearnystUtils/commonUtils";
+import { useSnackbar } from "notistack";
 
 const CustomizedVideo = styled("video")({
   borderRadius: 4,
@@ -24,6 +27,10 @@ function VideoCard(props) {
   const { t } = useTranslation();
   const [displayHover, setDisplayHover] = React.useState(false);
   const theme = useTheme();
+  const schoolData = getSchoolDetails();
+  const { userName } = schoolData;
+  const { enqueueSnackbar } = useSnackbar();
+  const sessionConfigData = safeParseJSON(getSessionConfigData())
 
   const cardBtnStyle = {
     display: "flex",
@@ -54,6 +61,35 @@ function VideoCard(props) {
     useAvatar = !parseMetaDataAndGetIsCameraOn(metaData) && !parseMetaDataAndGetIsScreenShared(metaData);
   }
 
+  const videoResolution = localStorage.getItem("videoSendResolution") || conference.videoSendResolution
+
+  if (props?.trackAssignment.isMine) {
+    conference.setBlackScreenProperties({
+      canvasWidth: conference.videoQualityConstraints.video.width.ideal,
+      canvasHeight: conference.videoQualityConstraints.video.height.ideal,
+      canvasTitle: userName ? `${userName} (Host)` : 'stream is off',
+      ...(videoResolution === 'highDefinition'
+        ? {
+            canvasTitleFontSize: '40px',
+            canvasCircleRadius: 65,
+          }
+        : {}),
+      ...(videoResolution === 'standardDefinition' || 
+        videoResolution === 'auto'
+        ? {
+            canvasTitleFontSize: '30px',
+            canvasCircleRadius: 50,
+          }
+        : {}),
+      ...(videoResolution === 'lowDefinition'
+        ? {
+            canvasTitleFontSize: '16px',
+            canvasCircleRadius: 30,
+          }
+        : {}),
+    });
+  }
+
   function isJsonString(str) {
     try {
       JSON.parse(str);
@@ -82,6 +118,7 @@ function VideoCard(props) {
 
   const [isTalking, setIsTalking] = React.useState(false);
 
+  const [isBrowserFullScreen, setIsBrowserFullScreen] = React.useState(false);
 
   const timeoutRef = React.useRef(null);
 
@@ -106,6 +143,32 @@ function VideoCard(props) {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [conference.isPublished]);
+
+    useEffect(() => {
+      const handleKeyDown = (event) => {
+        if (event.key === 'Escape' || event.keyCode === 27) {
+          if(conference.isFullScreen) {
+            handleFullScreenAction();
+          }
+        }
+      };
+
+      window.addEventListener('keydown', handleKeyDown);
+
+      // Clean up the event listener when the component unmounts
+      return () => {
+        window.removeEventListener('keydown', handleKeyDown);
+      };
+    },[]);
+
+    useEffect(() => {
+      if (isMobile || isTablet) {
+        setIsBrowserFullScreen(true)
+        document?.documentElement?.requestFullscreen().then((r) => {
+          console.log('Fullscreen is requested', r);
+        });
+      }
+    }, []);
 
     const overlayButtonsGroup = () => {
         if (process.env.REACT_APP_VIDEO_OVERLAY_ADMIN_MODE_ENABLED === "true") {
@@ -362,20 +425,25 @@ function VideoCard(props) {
   const avatarOrPlayer = () => {
     return (
       <>
-        <Grid
+        {/* <Grid
           sx={useAvatar ? {} : { display: "none" }}
           style={{ height: "100%" }}
           container
         >
           <DummyCard />
-        </Grid>
+        </Grid> */}
 
         <Grid
           container
-          sx={useAvatar ? { display: "none" } : {}}
+          // sx={useAvatar ? { display: "none" } : {}}
+          sx={useAvatar ? {} : {}}
           style={{
-            height: "100%",
-            transform: mirrorView ? "rotateY(180deg)" : "none",
+            height: '100%',
+            // transform:
+            //   mirrorView && !conference.isScreenShared && !conference?.isMyCamTurnedOff
+            //     ? 'rotateY(180deg)'
+            //     : 'none',
+            transform: 'none'
           }}
         >
           <CustomizedVideo
@@ -399,25 +467,63 @@ function VideoCard(props) {
         container
         className="video-card-btn-group"
         columnSpacing={1}
-        direction="row-reverse"
+        // direction="row-reverse"
         sx={{
           position: "absolute",
-          top: 0,
-          left: 0,
-          p: { xs: 1, md: 2 },
+          top: 10,
+          // left: 0,
+          right: -4,
           zIndex: 9,
+          alignItems: 'center',
+          gap: 0
         }}
       >
+        {!props?.hideFullScreen && 
+        <Tooltip title={conference.isFullScreen || isBrowserFullScreen? t("Exit Full screen") : t("Enter Full screen")} placement="top">
+        <Grid item>
+          <CustomizedBox
+            id={"full-screen-"+props.trackAssignment.streamId}
+            sx={{...cardBtnStyle, cursor: "pointer", background : conference.isFullScreen || isBrowserFullScreen ?  "#fff" : alpha(theme.palette.gray[90], 0.3) , width: '32px', height: '32px'}}
+            onClick={()=>handleFullScreenAction()}
+            >
+            <SvgComponent name="resolution" width="18px" height="18px" fill= {conference.isFullScreen || isBrowserFullScreen ?  "#1a73e8" : "#fff"} />
+          </CustomizedBox>
+        </Grid>
+        </Tooltip>
+        }
         {micMuted && (
           <Tooltip title={t("mic is muted")} placement="top">
             <Grid item>
               <CustomizedBox
                 id={"mic-muted-"+props.trackAssignment.streamId}
-                sx={cardBtnStyle}>
-                <SvgIcon size={32} name={"muted-microphone"} color="#fff" />
+                sx={{...cardBtnStyle, width: '32px', height: '32px'}}
+                >
+                {/* <SvgIcon size={32} name={"muted-microphone"} color="#fff" /> */}
+                <SvgComponent name="mutedMicrophone" width="18px" height="18px" fill="#fff" />
               </CustomizedBox>
             </Grid>
           </Tooltip>
+        )}
+        {!micMuted && conference.isPlayOnly && (
+          <div
+            style={{
+              borderColor: theme.palette.themeColor[90],
+              ...(isTalking || conference.talkers.includes(props.trackAssignment.streamId)
+                ? {}
+                : { display: 'none' }),
+            }}
+          >
+            <Tooltip title={t('Host is talking')} placement='top'>
+              <Grid item>
+                <CustomizedBox
+                  id={'host-talking' + props.trackAssignment.streamId}
+                  sx={{...cardBtnStyle, width: '32px', height: '32px', marginLeft: 1}}
+                >
+                  <SvgComponent name='soundOn' width='24px' height='24px' fill={'#ffff'} />
+                </CustomizedBox>
+              </Grid>
+            </Tooltip>
+          </div>
         )}
         {/* <Grid item>
           <Box sx={cardBtnStyle}>
@@ -431,6 +537,31 @@ function VideoCard(props) {
               <CustomizedBox sx={cardBtnStyle}>
                 <SvgIcon size={36} name={"unpin"} color="#fff" />
               </CustomizedBox>
+            </Grid>
+          </Tooltip>
+        )}
+      </Grid>
+    );
+  }
+
+  const overlayUtilityButton = () => {
+    return (
+      <Grid
+        container
+        className="video-card-btn-group"
+        columnSpacing={1}
+        direction="row-reverse"
+        sx={{
+          position: "absolute",
+          top: 10,
+          left: -20,
+          zIndex: 0,
+        }}
+      >
+       {sessionConfigData?.isRecordingEnabled && !props?.hideRecording && (
+          <Tooltip title={t("Recording")} placement="top">
+            <Grid item>
+                <SvgComponent name="recording"/>
             </Grid>
           </Tooltip>
         )}
@@ -458,17 +589,39 @@ function VideoCard(props) {
     );
   }
 
+  // const isTalkingFrame = () => {
+  //   return (
+  //     <div
+  //       className="talking-indicator-light"
+  //       style={{
+  //         borderColor: theme.palette.themeColor[20],
+  //         ...(isTalking || conference.talkers.includes(props.trackAssignment.streamId)
+  //           ? {}
+  //           : { display: "none" }),
+  //       }}
+  //     />
+  //   );
+  // }
+
   const isTalkingFrame = () => {
     return (
       <div
-        className="talking-indicator-light"
+        className='talking-indicator-light'
         style={{
-          borderColor: theme.palette.themeColor[20],
+          borderColor: theme.palette.themeColor[90],
           ...(isTalking || conference.talkers.includes(props.trackAssignment.streamId)
             ? {}
-            : { display: "none" }),
+            : { display: 'none' }),
         }}
-      />
+      >
+        <Tooltip title={t('Host is talking')} placement='top'>
+          <Grid item>
+            <CustomizedBox id={'host-talking' + props.trackAssignment.streamId} sx={cardBtnStyle}>
+              <SvgComponent name='soundOn' width='24px' height='24px' fill={'#ffff'} />
+            </CustomizedBox>
+          </Grid>
+        </Tooltip>
+      </div>
     );
   }
 
@@ -478,6 +631,30 @@ function VideoCard(props) {
       conference?.localVideoCreate(tempLocalVideo);
     }
   };
+
+  const handleFullScreenAction = () => {
+  if((isMobile) || (isTablet)) {
+    if (!document?.fullscreenElement) {
+      document?.documentElement?.requestFullscreen().then((r) => {
+        console.log('Fullscreen is requested', r);
+        setIsBrowserFullScreen(true);
+      });
+    } else {
+      document?.exitFullscreen().then((r) => {console.log('Fullscreen is exited', r);setIsBrowserFullScreen(false);});
+    }
+  }
+
+    if((!isMobile) && (!isTablet)) {
+      conference.setIsFullScreen(!conference.isFullScreen)
+      if(!conference.isFullScreen) {
+        enqueueSnackbar({
+          message:   t('Double tap on screen` or press `FullScreen Button` to exit fullscreen.') ,
+          variant: 'info',
+          autoHideDuration: 2000,
+        });
+      }
+    }
+  }
 
   return props?.trackAssignment.isMine || props.trackAssignment.track?.kind !== "audio" ? (
     <>
@@ -490,9 +667,10 @@ function VideoCard(props) {
         }}
         onMouseEnter={() => setDisplayHover(true)}
         onMouseLeave={(e) => setDisplayHover(false)}
+        onDoubleClick={() => handleFullScreenAction()}
       >
 
-        {overlayButtonsGroup()}
+        {/* {overlayButtonsGroup()} */}
 
         <div
           className={`single-video-card`}
@@ -504,7 +682,9 @@ function VideoCard(props) {
 
           {overlayParticipantStatus()}
 
-          {isTalkingFrame()}
+          {overlayUtilityButton()}
+
+          {/* {isTalkingFrame()} */}
 
           {overlayVideoTitle()}
 

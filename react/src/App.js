@@ -32,7 +32,7 @@ i18n.changeLanguage(preferredLanguage).then(r => console.log("Language is set to
 
 let selectedTheme = localStorage.getItem('selectedTheme');
 if (!selectedTheme) {
-  selectedTheme = ThemeList.Green;
+  selectedTheme = ThemeList.LearnystTheme;
   localStorage.setItem('selectedTheme', selectedTheme);
 }
 

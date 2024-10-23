@@ -1,7 +1,8 @@
 import React from 'react';
 import Button from '@mui/material/Button';
-import { SvgIcon } from './SvgIcon';
+// import { SvgIcon } from './SvgIcon';
 import { ConferenceContext } from 'pages/AntMedia';
+import { SvgComponent } from 'learnystIcons';
 
 function DrawerButton(props) {
   const conference = React.useContext(ConferenceContext);
@@ -9,7 +10,8 @@ function DrawerButton(props) {
 
   return (
     <Button sx={{ minWidth: 30 }} onClick={() => {conference?.handleMessageDrawerOpen(false); conference?.handleParticipantListOpen(false); conference?.handleEffectsOpen(false); conference?.setPublisherRequestListDrawerOpen(false);}}>
-      <SvgIcon size={24} name={'close'} color={'white'} />
+      {/* <SvgIcon size={24} name={'close'} color={'white'} /> */}
+      <SvgComponent name="close" width="18px" height="18px" fill={"#000000"}/>
     </Button>
   );
 }
