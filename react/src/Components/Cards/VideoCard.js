@@ -454,7 +454,7 @@ function VideoCard(props) {
             style={{ objectFit: "contain" }}
             ref={refVideo}
             playsInline
-            muted={props?.trackAssignment.isMine}
+            muted={true} // mute the video because we are playing the audio separately
           />
         </Grid>
       </>
@@ -675,6 +675,14 @@ function VideoCard(props) {
         <div
           className={`single-video-card`}
           id={'card-'+(props.trackAssignment.streamId !== undefined ? props?.trackAssignment.streamId : "")}
+          style={{
+            height: (props.isMobileView === true) ? "40%" : "100%",
+            width: (props.isMobileView === true) ? "20%" : "100%",
+            position: "relative",
+            borderRadius: 4,
+            margin: (props.isMobileView === true) ? 30 : 0,
+            overflow: "hidden",
+          }}
         >
           {avatarOrPlayer()}
 
